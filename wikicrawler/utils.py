@@ -20,3 +20,16 @@ def remove_single_characters(text):
 
 def lemmatize(text):
     return ' '.join([lemma.lemmatize(word) for word in text.split()])
+
+
+def get_cleaned_text(tet):
+    text = text.replace('\n', '')
+    text = remove_numbers(text)
+    text = remove_stop_words(text)
+    text = remove_punctuation(text)
+    text = remove_single_characters(text)
+
+    # Lemmatize the Document
+    text = lemmatize(text)
+    return text
+
