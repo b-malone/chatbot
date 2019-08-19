@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sqlite3
 import wptools  # WikiPage Tools lib
 import re
@@ -40,7 +41,7 @@ class Content:
     def get_page_url_by_id(self, pageid):
         return self.cursor.execute('SELECT url FROM content WHERE pageid=?', pageid)
 
-    def get_categories_and_members(self, category, depth):
+    def download_categories_and_members(self, category, depth):
         """
         Start with the defined category and download Wikipedia content
         up to a set depth of categories.

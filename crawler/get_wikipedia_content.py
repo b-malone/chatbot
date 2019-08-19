@@ -1,25 +1,28 @@
+#!/usr/bin/env python3
+
 import sqlite3
 import wptools  # WikiPage Tools lib
 import re
 from bs4 import BeautifulSoup
 
+
 class CrawlWikipedia:
     def __init__(self, db_file):
-    """ 
-    Initialize the crawler class for getting data from Wikipedia.
-    Setup a small SQLite DB in file.
+        """ 
+        Initialize the crawler class for getting data from Wikipedia.
+        Setup a small SQLite DB in file.
 
-        Wikipedia pages are "members" of "categories"
-    """        
-    self.categories = []
-    # Create DB
-    self.conn = sqlite3.connect(db_file)
-    cursor = self.conn.cursor()
-    # Create Table for Pages
-    cursor.execute('CREATE TABLE IF NOT EXISTS content \
-        (pageid text, category text, url text, content text')    
-    self.conn.commit()
-    self.cursor = self.conn.cursor()
+            Wikipedia pages are "members" of "categories"
+        """        
+        self.categories = []
+        # Create DB
+        print('Use DB file {}'.format(db_file))
+        self.conn = sqlite3.connect(db_file)
+        cursor = self.conn.cursor()
+        # Create Table for Pages
+        cursor.execute('CREATE TABLE IF NOT EXISTS content (pageid text, category text, url text, content text)')    
+        self.conn.commit()
+        self.cursor = self.conn.cursor()
 
 
     def save_page_content(self, category, pageid, url, content):
@@ -44,13 +47,17 @@ class CrawlWikipedia:
             cat = wptools.category(category) 
             cat_members = cat.get_members()
 
+            print(u'cat_members: {}'.format(cat_members.data))
+            print(u'cat_members_keys: {}'.format(cat_members.data.keys()))
+
             # 1 - save any pages (members) for this category
             if 'members' in cat_members.data.keys():
                 for cat_member in cat_members.data['members']:
+                    print(u'member: {}'.format(cat_member))
                     # IF NOT already saved...
                     if cat_member['pageid'] not in self.get_page_ids():
                         # Get the page Content
-                        page = wptools.page(pageid=cat_member['pageid'].get_parse())
+                        page = wptools.page(pageid=cat_member['pageid']).get_parse()
                         
                         url = page.get_query().data['url']
                         # CLEAN: remove HTML syntax and <ref>
@@ -75,5 +82,3 @@ class CrawlWikipedia:
             # INFO
             for cat in self.categories:
                 print(u'Category: {}'.format(cat))
-
-
