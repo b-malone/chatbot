@@ -1,10 +1,19 @@
+import os
 import string
-from mltk.corpus import stopwords
+from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
 
 lemma = WordNetLemmatizer()
 punctuation = set(string.punctuation)
 stoplist = set(stopwords.words('english'))
+
+def get_file_path(rel_filepath):
+    dir_path = os.path.split( os.path.dirname(__file__) )
+    # path = os.path.abspath( os.path.relpath(rel_filepath) )
+    path = os.path.join(dir_path[0], rel_filepath)
+    print('path = {}'.format(path))
+    # return os.path.join(path, rel_filepath)
+    return path
 
 def remove_punctuation(text):
     return ''.join(char for char in text if char not in punctuation)
@@ -13,7 +22,7 @@ def remove_numbers(text):
     return ''.join(char for char in text if char not in char.is_digit())
 
 def remove_stop_words(text):
-    return ' '.join([word for word in text.split() word not in stoplist])
+    return ' '.join([word for word in text.split() if word not in stoplist])
 
 def remove_single_characters(text):
     return ' '.join([word for word in text.split() if len(word) > 1])
@@ -35,6 +44,7 @@ def get_cleaned_text(text):
 
 
 def get_unique_matrix_sim_values(sims, page_ids):
+    pids = []
     index = 0
     result = 10
 

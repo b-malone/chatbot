@@ -16,11 +16,12 @@ class Content:
         """        
         self.categories = []
         # Create DB
+        print('Open DB_FILE {}'.format(db_file))
         self.conn = sqlite3.connect(db_file)
         cursor = self.conn.cursor()
         # Create Table for Pages
         cursor.execute('CREATE TABLE IF NOT EXISTS content \
-            (pageid text, category text, url text, content text')    
+            (pageid text, category text, url text, content text)')    
         self.conn.commit()
         self.cursor = self.conn.cursor()
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # Imports and Config
 # #########################
+import os
 import sqlite3
 import string
 import logging 
 import pickle 
 
-from genism import corpora, utils, models, similarities
+from gensim import corpora, utils, models, similarities # "fast" vector space modeling
 from collections import defaultdict
 
 import nltk
@@ -26,7 +27,7 @@ RANDOM_STATE=1
 # ### LOGGING for Gensim
 logging.basicConfig()
 # ### Data Stores and backups
-DATABASE = '../data/content.db'
+DATABASE_FILE = 'data/wiki_content.db'
 LDA_BACKUP = '../data/lda_model'
 DICT_BACKUP = '../data/dictionary'
 CORPUS_BACKUP = '../data/corpus'
@@ -50,12 +51,14 @@ lemma = WordNetLemmatizer()
 
 # Access DataBase content, 
 # build content (Object) for modeling and analysis
+# DATABASE=os.path.abspath(DATABASE_FILE)
+DATABASE=utils.get_file_path(DATABASE_FILE)
 content = content.Content(DATABASE)
 
-# # EX: View a page
-# page_ids = content.get_page_ids()
-# page = content.get_page_by_id(page_ids[0])
-# print(page)
+# EX: View a page
+page_ids = content.get_page_ids()
+page = content.get_page_by_id(page_ids[0])
+print(page)
 
 # # Lemmatize Document
 # page = lemma.lemmatize(page)
