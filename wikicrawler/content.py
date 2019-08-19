@@ -1,8 +1,9 @@
-class Content:
 import sqlite3
 import wptools  # WikiPage Tools lib
 import re
 from bs4 import BeautifulSoup
+
+import utils
 
 class Content:
     def __init__(self, db_file):
@@ -87,3 +88,6 @@ class Content:
         """
         Iterator for the document set stored in the DB.
         """
+        for pageid in self.get_page_ids():
+            page = self.get_page_by_id(pageid)
+            yield utils.get_cleaned_text(page).split()
