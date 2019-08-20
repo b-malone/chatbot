@@ -2,13 +2,14 @@
 # Imports and Config
 # #########################
 import os
+import pickle
 import json
 import sqlite3
 import string
 import logging 
-import pickle 
+# import pickle 
 
-from gensim import corpora, utils, models # "fast" vector space modeling
+from gensim import utils, corpora # "fast" vector space modeling
 from collections import defaultdict
 
 import nltk
@@ -53,87 +54,41 @@ lemma = WordNetLemmatizer()
 # Access DataBase content, 
 # build content (Object) for modeling and analysis
 # DATABASE=os.path.abspath(DATABASE_FILE)
-DATABASE=utils.get_file_path(DATABASE_FILE)
+DATABASE = utils.get_file_path(DATABASE_FILE)
 content = content.Content(DATABASE)
 
 # Create a Dictionary
 ## Vector Space of words and word_count
-dictionary = []
-try:
-    DICT=utils.get_file_path(DICT_BACKUP)
-    with open(DICT, "rb") as dict_file:
-        if dict_file:
-            print('Loading Dictionary File.')
-            dictionary = pickle.load(dict_file)
-            print('Dictionary Size = {}'.format(len(dictionary)))
-        else:
-            print('Building Dictionary...')
-            dictionary = corpora.Dictionary(content)    # list: (word_id, appearance count)
-            dictionary.filter_extremes(no_below=5, no_above=0.4)
-            print('Dictionary Size = {}'.format(len(dictionary)))
-except:
-    print('Building Dictionary...')
-    dictionary = corpora.Dictionary(content)    # list: (word_id, appearance count)
-    dictionary.filter_extremes(no_below=5, no_above=0.4)
-    print('Dictionary Size = {}'.format(len(dictionary)))
+dictionary = utils.build_dictionary(content, DICT_BACKUP)
 
 # Create a Corpus
-corpus = []
-try:
-    CORPUS=utils.get_file_path(CORPUS_BACKUP)
-    with open(CORPUS, "rb") as corp_file:
-        if corp_file:
-            print('Loading Corpus File.')
-            corpus = pickle.load(corp_file)
-            print('Corpus Size = {}'.format(len(corpus)))
-        else:
-            print('Building Corpus...')
-            corpus = [dictionary.doc2bow(text) for text in content] # doc-to-bag_of_words
-            print('Corpus Size = {}'.format(len(corpus)))
-except:
-    print('Building Corpus...')
-    corpus = [dictionary.doc2bow(text) for text in content] # doc-to-bag_of_words
-    print('Corpus Size = {}'.format(len(corpus)))
+corpus = utils.build_corpus(dictionary, content, CORPUS_BACKUP)
 
 # Build LDA Model
-lda = []
-try:
-    LDA=utils.get_file_path(LDA_BACKUP)
-    with open(LDA, "rb") as lda_file:
-        if lda_file:
-            print('Loading LDA File.')
-            lda = pickle.load(lda_file)
-            print('Counting Topics...')
-            lda.print_topics(10) # Topic ~ set of (related) words
-        else:
-            print('Building LDA Model...')
-            lda = models.LdaModel(corpus, id2word=dictionary, random_state=RANDOM_STATE, num_topics=NUM_TOPICS, passes=NUM_PASSES)
-            print('Done!')
-            print('Counting Topics...')
-            topics = lda.print_topics(10) # Topic ~ set of (related) words
-            print(topics)
-except:
-    print('Building LDA Model...')
-    lda = models.LdaModel(corpus, id2word=dictionary, random_state=RANDOM_STATE, num_topics=NUM_TOPICS, passes=NUM_PASSES)
-    print('Done!')
-    print('Counting Topics...')
-    topics = lda.print_topics(10) # Topic ~ set of (related) words
-    print(topics)
+model_config = {}
+model_config['RANDOM_STATE'] = RANDOM_STATE
+model_config['NUM_TOPICS'] = NUM_TOPICS
+model_config['PASSES'] = NUM_PASSES
+lda = utils.build_lda_model(dictionary, corpus, model_config, LDA_BACKUP)
+
+print('Counting Topics...')
+topics = lda.print_topics(10) # Topic ~ set of (related) words
+print(topics)
 
 # ??? Topics Count
 # print('Counting Topics...')
-# lda.print_topics(10) # Topic ~ set of (related) words
+lda.print_topics(10) # Topic ~ set of (related) words
 
 
 
-# Save Model Structures
-lda.save(LDA_BACKUP)
-with open(DICT_BACKUP, "wb") as fp:
-    pickle.dump(dictionary, fp)
-fp.close()
-with open(CORPUS_BACKUP, "wb") as fp:
-    pickle.dump(corpus, fp)
-fp.close()
+# # Save Model Structures
+# lda.save(LDA_BACKUP)
+# with open(DICT_BACKUP, "wb") as fp:
+#     pickle.dump(dictionary, fp)
+# fp.close()
+# with open(CORPUS_BACKUP, "wb") as fp:
+#     pickle.dump(corpus, fp)
+# fp.close()
 # with open(LDA_BACKUP, "wb") as fp:
 #     pickle.dump(lda, fp)
 # fp.close()
