@@ -2,24 +2,32 @@ import os
 import string
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
+from gensim import similarities
 
 lemma = WordNetLemmatizer()
 punctuation = set(string.punctuation)
 stoplist = set(stopwords.words('english'))
 
+
+def get_similarity(lda, q_vec):
+    """
+    Find related Documents.
+    """
+    index = similarities.MatrixSimilarity(lda[corpus])
+    sims = index[q_vec]
+    return sims
+
 def get_file_path(rel_filepath):
     dir_path = os.path.split( os.path.dirname(__file__) )
-    # path = os.path.abspath( os.path.relpath(rel_filepath) )
     path = os.path.join(dir_path[0], rel_filepath)
-    print('path = {}'.format(path))
-    # return os.path.join(path, rel_filepath)
+    # print('path = {}'.format(path))
     return path
 
 def remove_punctuation(text):
     return ''.join(char for char in text if char not in punctuation)
 
 def remove_numbers(text):
-    return ''.join(char for char in text if char not in char.is_digit())
+    return ''.join(char for char in text if not char.isdigit())
 
 def remove_stop_words(text):
     return ' '.join([word for word in text.split() if word not in stoplist])

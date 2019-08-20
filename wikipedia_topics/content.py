@@ -16,7 +16,7 @@ class Content:
         """        
         self.categories = []
         # Create DB
-        print('Open DB_FILE {}'.format(db_file))
+        # print('Open DB_FILE {}'.format(db_file))
         self.conn = sqlite3.connect(db_file)
         cursor = self.conn.cursor()
         # Create Table for Pages
@@ -34,10 +34,11 @@ class Content:
         return [url for url in self.cursor.execute('SELECT url FROM content')]
 
     def get_page_ids(self):
-        return [pageid for pageid in self.cursor.execute('SELECT pageid FROM content')]
+        return [pageid for pageid in self.cursor.execute('SELECT pageid FROM content').fetchall()]
 
     def get_page_by_id(self, pageid):
-        return str(self.cursor.execute('SELECT content FROM content WHERE pageid=?', pageid))
+        # return str(self.cursor.execute('SELECT content FROM content WHERE pageid=?', pageid))
+        return str(self.cursor.execute('SELECT content FROM content WHERE pageid=?', [pageid]).fetchone())
 
     def get_page_url_by_id(self, pageid):
         return self.cursor.execute('SELECT url FROM content WHERE pageid=?', pageid)
@@ -86,10 +87,23 @@ class Content:
             for cat in self.categories:
                 print(u'Category: {}'.format(cat))
 
+    def get_cleaned_pages(self):
+        pages = list()
+
+        for pageid in self.get_page_ids():
+            page_id = pageid[0]
+            page_content = self.get_page_by_id(page_id)
+            clean_text = utils.get_cleaned_text(page_content).split()
+            pages.append(clean_text)
+
+        return pages
+
     def __iter__(self):
         """
         Iterator for the document set stored in the DB.
         """
         for pageid in self.get_page_ids():
-            page = self.get_page_by_id(pageid)
-            yield utils.get_cleaned_text(page).split()
+            page_id = pageid[0]
+            page_content = self.get_page_by_id(page_id)
+            clean_text = utils.get_cleaned_text(page_content).split()
+            yield clean_text
