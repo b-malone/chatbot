@@ -10,7 +10,7 @@ punctuation = set(string.punctuation)
 stoplist = set(stopwords.words('english'))
 
 
-def get_similarity(lda, q_vec):
+def get_similarity(lda, corpus, q_vec):
     """
     Find related Documents.
     """
@@ -20,6 +20,7 @@ def get_similarity(lda, q_vec):
 
 def get_file_path(rel_filepath):
     dir_path = os.path.split( os.path.dirname(__file__) )
+    # print('dir_path = {}'.format(dir_path))
     path = os.path.join(dir_path[0], rel_filepath)
     # print('path = {}'.format(path))
     return path
@@ -55,78 +56,120 @@ def get_cleaned_text(text):
     text = lemmatize(text)
     return text
 
-def build_dictionary(content, DICT_BACKUP):
+def build_dictionary(content, should_rebuild, DICT_BACKUP):
     dictionary = []
-    try:
-        DICT = get_file_path(DICT_BACKUP)
-        with open(DICT, "rb") as dict_file:
-            if dict_file:
-                print('Loading Dictionary File.')
-                dictionary = pickle.load(dict_file)
-                print('Dictionary Size = {}'.format(len(dictionary)))
-            else:
-                print('Building Dictionary...')
-                dictionary = corpora.Dictionary(content)    # list: (word_id, appearance count)
-                dictionary.filter_extremes(no_below=5, no_above=0.4)
-                # SAVE the construction
-                self.pickle_save(DICT_BACKUP, dictionary)
-                print('Dictionary Size = {}'.format(len(dictionary)))
-    except:
+
+    if not should_rebuild:
+        try:
+            DICT = get_file_path(DICT_BACKUP)
+            with open(DICT, "rb") as dict_file:
+                if dict_file:
+                    print('Loading Dictionary File.')
+                    dictionary = pickle.load(dict_file)
+                    print('Dictionary Size = {}'.format(len(dictionary)))
+        except:
+            print('ERROR Building Dictionary!')
+    else:
         print('Building Dictionary...')
         dictionary = corpora.Dictionary(content)    # list: (word_id, appearance count)
         dictionary.filter_extremes(no_below=5, no_above=0.4)
         # SAVE the construction
-        self.pickle_save(DICT_BACKUP, dictionary)
+        pickle_save(DICT_BACKUP, dictionary)
         print('Dictionary Size = {}'.format(len(dictionary)))
+
+    # except:
+    #     print('Building Dictionary...')
+    #     dictionary = corpora.Dictionary(content)    # list: (word_id, appearance count)
+    #     dictionary.filter_extremes(no_below=5, no_above=0.4)
+    #     # SAVE the construction
+    #     self.pickle_save(DICT_BACKUP, dictionary)
+    #     print('Dictionary Size = {}'.format(len(dictionary)))
     
     return dictionary
 
-def build_corpus(dictionary, content, CORPUS_BACKUP):
+def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
     corpus = []
-    try:
-        CORPUS=utils.get_file_path(CORPUS_BACKUP)
-        with open(CORPUS, "rb") as corp_file:
-            if corp_file:
-                print('Loading Corpus File.')
-                corpus = pickle.load(corp_file)
-                print('Corpus Size = {}'.format(len(corpus)))
-            else:
-                print('Building Corpus...')
-                corpus = [dictionary.doc2bow(text) for text in content] # doc-to-bag_of_words
-                # SAVE the construction
-                self.pickle_save(CORPUS_BACKUP, corpus)
-                print('Corpus Size = {}'.format(len(corpus)))
-    except:
+    if not should_rebuild:
+        try:
+            CORPUS = get_file_path(CORPUS_BACKUP)
+            with open(CORPUS, "rb") as corp_file:
+                if corp_file:
+                    print('Loading Corpus File.')
+                    corpus = pickle.load(corp_file)
+                    print('Corpus Size = {}'.format(len(corpus)))
+        except:
+            print('ERROR Building Corpus!')
+    else:
         print('Building Corpus...')
         corpus = [dictionary.doc2bow(text) for text in content] # doc-to-bag_of_words
+        # SAVE the construction
+        pickle_save(CORPUS_BACKUP, corpus)
         print('Corpus Size = {}'.format(len(corpus)))
 
     return corpus
 
-def build_lda_model(dictionary, corpus, config, LDA_BACKUP):
+def model_switch_dict():
+    return {
+        'lda': build_lda_model,
+        'lsi': build_lsi_model
+    }
+
+def build_model(dictionary, corpus, config, should_rebuild, BACKUP_FILE):
+    # try:
+    model_build_fn = model_switch_dict()[config['MODEL_NAME']]
+
+    return model_build_fn(dictionary, corpus, config, should_rebuild, BACKUP_FILE)
+    # except:
+    #     print('Unrecognized Model Name!')
+    #     return {}
+
+
+def build_lda_model(dictionary, corpus, config, should_rebuild, LDA_BACKUP):
     lda = []
-    try:
-        LDA = utils.get_file_path(LDA_BACKUP)
-        with open(LDA, "rb") as lda_file:
-            if lda_file:
-                print('Loading LDA File.')
-                lda = pickle.load(lda_file)
-                print('Building LDA Model...')
-                lda = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
-                print('Done!')
-    except:
+    if not should_rebuild:
+        try:
+            LDA = get_file_path(LDA_BACKUP)
+            print('LDA_FILE = {}'.format(LDA))
+            with open(LDA, "a") as lda_file:
+                if lda_file:
+                    print('Loading LDA File.')
+                    lda = models.LdaModel.load(lda_file)
+        except:
+            print('ERROR Building LDA Model!')
+
+    else:
         print('Building LDA Model...')
         lda = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
         print('Done!')
-
-    # Save Model Structures
-    if len(lda.print_topics(1)) > 0:
-        lda.save(LDA_BACKUP)
+        # Save Model Structures
+        LDA_FILE = get_file_path(LDA_BACKUP)
+        lda.save(LDA_FILE)
 
     return lda
 
+def build_lsi_model(dictionary, corpus, config, should_rebuild, LSI_BACKUP):
+    lsi = []
+    if not should_rebuild:
+        try:
+            LSI = get_file_path(LSI_BACKUP)
+            with open(LSI, "a") as lsi_file:
+                if lsi_file:
+                    print('Loading LSI File.')
+                    lsi = models.LsiModel.load(lsi_file)
 
-def get_unique_matrix_sim_values(sims, page_ids):
+        except:
+            print('ERROR Building LSI Model!')
+
+    else:
+        print('Building LSI Model...')
+        lsi = models.LsiModel(corpus, id2word=dictionary, num_topics=config['NUM_TOPICS'])
+        print('Done!')
+        # Save Model Structures
+        lsi.save(LSI_BACKUP)
+
+    return lsi
+
+def get_unique_matrix_sim_values(sims, content, page_ids):
     pids = []
     index = 0
     result = 10
@@ -135,8 +178,10 @@ def get_unique_matrix_sim_values(sims, page_ids):
         page_id = page_ids[sims[index][0]]
         if page_id not in pids:
             pids.append(page_id)
-            # print('Page ID {}: {}'.format(page_id[0]), content.get_page_url_by_id(page_id[0]))
+            print('Page ID {}: {}'.format(page_id[0]), content.get_page_url_by_id(page_id[0]))
             result -= 1
         index += 1
     
     return pids
+
+    
