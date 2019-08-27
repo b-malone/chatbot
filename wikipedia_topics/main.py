@@ -69,7 +69,7 @@ print( type(should_rebuild) )
 
 # #########################
 
-# LDA Model, stores
+# Model, stores
 dictionary = corpora.Dictionary()
 lemma = WordNetLemmatizer()
 
@@ -121,8 +121,8 @@ bag_of_words = [word for word in bow]
 
 # DEBUG
 # Bag Of Words ON Query
-for word in bag_of_words:
-    print('{}: {}'.format(word[0], dictionary[word[0]]))
+# for word in bag_of_words:
+    # print('{}: {}'.format(word[0], dictionary[word[0]]))
 
 
 # Run Model on bag_of_words

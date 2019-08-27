@@ -5,3 +5,5 @@ spacy==2.1.6
 gensim==3.8.0
 wptools==0.4.17
 scrapy==1.7.3
+Flask==1.1.1
+flask_restful==0.3.7

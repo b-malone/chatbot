@@ -10,6 +10,9 @@ punctuation = set(string.punctuation)
 stoplist = set(stopwords.words('english'))
 
 
+def variable_is_defined(var):
+    return 'var' in vars() or 'var' in globals()
+
 def get_similarity(lda, corpus, q_vec):
     """
     Find related Documents.
@@ -113,6 +116,38 @@ def model_switch_dict():
         'lda': build_lda_model,
         'lsi': build_lsi_model
     }
+
+def query_model(model_name, content, should_rebuild, FILES, query):
+    # Create a Dictionary
+    ## Vector Space of words and word_count
+    dictionary = build_dictionary(content, should_rebuild, FILES.DICT)
+
+    # Create a Corpus
+    corpus = build_corpus(dictionary, content, should_rebuild, FILES.CORPUS)
+
+    bow = dictionary.doc2bow(get_cleaned_text( query ).split())
+    # bag_of_words = [word for word in bow]
+
+    model = build_model(dictionary, corpus, config, should_rebuild, BACKUP_FILE)
+    q_vec = model[bow]    # "query vector"
+    topic_details = model.print_topic(max(q_vec, key=lambda item: item[1])[0])
+
+    # ### Get Similarity of Query Vector to Document Vectors
+    sims = get_similarity(model, corpus, q_vec)
+    # Sort High-to-Low by similarity
+    sims = sorted(enumerate(sims), key=lambda item: -item[1])
+    # ###
+    # RECCOMMEND/TOPICS RESULT:
+    # ### Get Related Pages
+    pids = get_unique_matrix_sim_values(sims, content, content.get_page_ids())
+
+    # # "Swtich Map" model functions
+    # def lda():  
+    return []
+ 
+    
+
+
 
 def build_model(dictionary, corpus, config, should_rebuild, BACKUP_FILE):
     # try:
