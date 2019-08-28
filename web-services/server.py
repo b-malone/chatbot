@@ -103,11 +103,11 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     # ###########################
     # []
     # ###########################
-    print('###########################')
-    print( type(model) )
-    print('###########################')
-    print( model )
-    print('###########################')
+    # print('###########################')
+    # print( type(model) )
+    # print('###########################')
+    # print( model )
+    # print('###########################')
 
     # MODEL
     # BACKUP_FILE = switch_model_backup_file(model_name)
@@ -123,13 +123,23 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     # RECCOMMEND/TOPICS RESULT:
     # ### Get Related Pages
     pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
-    return pids 
+    # return pids 
 
-    # result = {}
+    print('###########################')
+    print( pids )
+    print('###########################')
+    print( pids[0] )
+    print('###########################')
+
+    result = {}
     # for pid in pids:
-    #     result[pid] = content.get_page_url_by_id(pid)
+        # print('###########################')
+        # print( pid )
+        # # print( pid[0] )
+        # print('###########################')
+        # result[pid[0]] = content.get_page_url_by_id(pid[0])
     
-    # return result
+    return result
 
     # # "Swtich Map" model functions
     # def lda():  
@@ -151,6 +161,7 @@ def query_model(model_name, content, should_rebuild, FILES, query):
 #         result = 'Error: INVALID JSON REQUEST'
     
 #     return result
+
 
 class LdaModelingServer(Resource):
     def post(self):

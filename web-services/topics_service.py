@@ -6,7 +6,7 @@ import logging
 import pickle
 import argparse
 from gensim import utils
-from flask import Flask, request, send_from_directory, send_file, jsonify
+from flask import Flask, request, send_from_directory, send_file, jsonify, escape
 from flask_restful import Resource, Api
 from werkzeug.exceptions import HTTPException, default_exceptions
 
@@ -92,6 +92,15 @@ api = Api(app)
 api.add_resource(LdaModelingServer, '/topics/lda')
 api.add_resource(LsiModelingServer, '/topics/lsi')
 
+# Disable Caching (Development)
+app.config["CACHE_TYPE"] = "null"
+
+# DEBUG
+@app.route('/')
+def hello():
+    name = request.args.get("name", "World")
+    return f'Hello, {escape(name)}!'
+
 # Handle/Return Errors (Debugging)
 def handle_error(error):
     code = 500
@@ -106,7 +115,4 @@ if __name__ == '__main__':
     # $ python lda_service.py => http://localhost:5000/lda
     app.run(host='0.0.0.0', port=PORT)
 
-# @app.route('/')
-# def hello():
-#     name = request.args.get("name", "World")
-#     return f'Hello, {escape(name)}!'
+

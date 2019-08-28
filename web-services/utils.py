@@ -151,7 +151,7 @@ def build_lda_model(dictionary, corpus, config, should_rebuild, LDA_BACKUP):
     if not should_rebuild:
         try:
             LDA = get_file_path(LDA_BACKUP)
-            if os.stat(LDA).st_size == 0:
+            if os.stat(LDA).st_size != 0:
                 # print('LDA_FILE = {}'.format(LDA))
                 with open(LDA, "a") as lda_file:
                     if lda_file:
@@ -164,9 +164,14 @@ def build_lda_model(dictionary, corpus, config, should_rebuild, LDA_BACKUP):
                 # Save Model Structures
                 LDA_FILE = get_file_path(LDA_BACKUP)
                 lda.save(LDA_FILE)
-
         except:
             print(' *** Error Loadind LDA Model!')
+            print('Building LDA Model...')
+            lda = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
+            print('Done!')
+            # Save Model Structures
+            LDA_FILE = get_file_path(LDA_BACKUP)
+            lda.save(LDA_FILE)
 
     else:
         print('Building LDA Model...')
