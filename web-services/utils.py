@@ -1,6 +1,7 @@
 import os
 import string
 import pickle
+import json
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
 from gensim import similarities, corpora, models
@@ -22,11 +23,16 @@ def get_similarity(lda, corpus, q_vec):
     return sims
 
 def get_file_path(rel_filepath):
-    dir_path = os.path.split( os.path.dirname(__file__) )
+    # dir_path = os.path.split( os.path.dirname(__file__) )
     # print('dir_path = {}'.format(dir_path))
-    path = os.path.join(dir_path[0], rel_filepath)
+    # path = os.path.join(dir_path[0], rel_filepath)
     # print('path = {}'.format(path))
-    return path
+    script_path = os.path.abspath(__file__) # i.e. /path/to/dir/foobar.py
+    script_dir  = os.path.split(script_path)[0] #i.e. /path/to/dir/
+    # rel_path = "2091/data.txt"
+    abs_file_path = os.path.join(script_dir, rel_filepath)
+
+    return abs_file_path
 
 def remove_punctuation(text):
     return ''.join(char for char in text if char not in punctuation)
@@ -48,6 +54,16 @@ def pickle_save(PATH, data):
         pickle.dump(data, fp)
     fp.close()
 
+# def serialize_json(PATH, data):
+#     with open(PATH+'.json', 'w', encoding='utf-8') as f:
+#         json.dump(data, f, ensure_ascii=False, indent=4)
+
+# def load_json_file(PATH):
+#     json_data = {}
+#     with open(PATH+'.json', 'r') as f:
+#         json_data = json.load(f)
+#     return json_data
+
 def get_cleaned_text(text):
     text = text.replace('\n', '')
     text = remove_numbers(text)
@@ -60,15 +76,19 @@ def get_cleaned_text(text):
     return text
 
 def build_dictionary(content, should_rebuild, DICT_BACKUP):
+    """
+       A  (Gensim) Dictionary is a map of unique words to unique IDs.
+    """
     dictionary = []
+    DICT_FILE = get_file_path(DICT_BACKUP)
 
     if not should_rebuild:
         try:
-            DICT = get_file_path(DICT_BACKUP)
             with open(DICT, "rb") as dict_file:
                 if dict_file:
                     print('Loading Dictionary File.')
-                    dictionary = pickle.load(dict_file)
+                    # load dict from disk
+                    dictionary = corpora.dictionary.load(dict_file)
                     print('Dictionary Size = {}'.format(len(dictionary)))
         except:
             print('ERROR Building Dictionary!')
@@ -77,28 +97,26 @@ def build_dictionary(content, should_rebuild, DICT_BACKUP):
         dictionary = corpora.Dictionary(content)    # list: (word_id, appearance count)
         dictionary.filter_extremes(no_below=5, no_above=0.4)
         # SAVE the construction
-        pickle_save(DICT_BACKUP, dictionary)
+        dictionary.save(DICT_FILE)  # save dict to disk
         print('Dictionary Size = {}'.format(len(dictionary)))
-
-    # except:
-    #     print('Building Dictionary...')
-    #     dictionary = corpora.Dictionary(content)    # list: (word_id, appearance count)
-    #     dictionary.filter_extremes(no_below=5, no_above=0.4)
-    #     # SAVE the construction
-    #     self.pickle_save(DICT_BACKUP, dictionary)
-    #     print('Dictionary Size = {}'.format(len(dictionary)))
     
     return dictionary
 
 def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
+    """
+        A (Gensim) Corpus is a "bag of words", which is a histogram map
+        for unique and relevant words in a document.
+    """
     corpus = []
+    CORPUS_FILE = get_file_path(CORPUS_BACKUP)
+
     if not should_rebuild:
         try:
-            CORPUS = get_file_path(CORPUS_BACKUP)
-            with open(CORPUS, "rb") as corp_file:
+            with open(CORPUS_FILE, "rb") as corp_file:
                 if corp_file:
                     print('Loading Corpus File.')
-                    corpus = pickle.load(corp_file)
+                    # corpus = pickle.load(corp_file)
+                    corpus = corpora.MmCorpus(corp_file+'.mm')
                     print('Corpus Size = {}'.format(len(corpus)))
         except:
             print('ERROR Building Corpus!')
@@ -106,7 +124,8 @@ def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
         print('Building Corpus...')
         corpus = [dictionary.doc2bow(text) for text in content] # doc-to-bag_of_words
         # SAVE the construction
-        pickle_save(CORPUS_BACKUP, corpus)
+        # corpus.save(CORPUS_FILE)  # save corpus to disk
+        corpora.MmCorpus.serialize(CORPUS_FILE+'.mm', corpus) # save corpus to disk
         print('Corpus Size = {}'.format(len(corpus)))
 
     return corpus
@@ -116,38 +135,6 @@ def model_switch_dict():
         'lda': build_lda_model,
         'lsi': build_lsi_model
     }
-
-def query_model(model_name, content, should_rebuild, FILES, query):
-    # Create a Dictionary
-    ## Vector Space of words and word_count
-    dictionary = build_dictionary(content, should_rebuild, FILES.DICT)
-
-    # Create a Corpus
-    corpus = build_corpus(dictionary, content, should_rebuild, FILES.CORPUS)
-
-    bow = dictionary.doc2bow(get_cleaned_text( query ).split())
-    # bag_of_words = [word for word in bow]
-
-    model = build_model(dictionary, corpus, config, should_rebuild, BACKUP_FILE)
-    q_vec = model[bow]    # "query vector"
-    topic_details = model.print_topic(max(q_vec, key=lambda item: item[1])[0])
-
-    # ### Get Similarity of Query Vector to Document Vectors
-    sims = get_similarity(model, corpus, q_vec)
-    # Sort High-to-Low by similarity
-    sims = sorted(enumerate(sims), key=lambda item: -item[1])
-    # ###
-    # RECCOMMEND/TOPICS RESULT:
-    # ### Get Related Pages
-    pids = get_unique_matrix_sim_values(sims, content, content.get_page_ids())
-
-    # # "Swtich Map" model functions
-    # def lda():  
-    return []
- 
-    
-
-
 
 def build_model(dictionary, corpus, config, should_rebuild, BACKUP_FILE):
     # try:
@@ -164,19 +151,22 @@ def build_lda_model(dictionary, corpus, config, should_rebuild, LDA_BACKUP):
     if not should_rebuild:
         try:
             LDA = get_file_path(LDA_BACKUP)
-            print('LDA_FILE = {}'.format(LDA))
-            with open(LDA, "a") as lda_file:
-                if lda_file:
-                    print('Loading LDA File.')
-                    lda = models.LdaModel.load(lda_file)
+            if os.stat(LDA).st_size == 0:
+                # print('LDA_FILE = {}'.format(LDA))
+                with open(LDA, "a") as lda_file:
+                    if lda_file:
+                        print('Loading LDA File.')
+                        lda = models.LdaModel.load(lda_file)
+            else:
+                print('Building LDA Model...')
+                lda = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
+                print('Done!')
+                # Save Model Structures
+                LDA_FILE = get_file_path(LDA_BACKUP)
+                lda.save(LDA_FILE)
+
         except:
-            print('Error Loadind LDA Model! Rebuilding...')
-            print('Building LDA Model...')
-            lda = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
-            print('Done!')
-            # Save Model Structures
-            LDA_FILE = get_file_path(LDA_BACKUP)
-            lda.save(LDA_FILE)
+            print(' *** Error Loadind LDA Model!')
 
     else:
         print('Building LDA Model...')

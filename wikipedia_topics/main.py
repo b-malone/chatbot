@@ -10,7 +10,7 @@ import string
 import logging 
 import argparse
 
-from gensim import utils, corpora # "fast" vector space modeling
+from gensim import utils, corpora, models # "fast" vector space modeling
 from collections import defaultdict
 
 import nltk
@@ -97,14 +97,14 @@ model_config['MODEL_NAME'] = MODEL_NAME
 # lda = utils.build_lda_model(dictionary, corpus, model_config, should_rebuild, LDA_BACKUP)
 # # lsi = utils.build_lsi_model(dictionary, corpus, model_config, should_rebuild, LSI_BACKUP)
 
-# Build Model!
+# # Build Model!
 BACKUP_FILE = 'data/' + MODEL_NAME.lower() + '_model'
 model = utils.build_model(dictionary, corpus, model_config, should_rebuild, BACKUP_FILE)
 
-if hasattr(model, 'print_topics'):
-    print('Counting Topics...')
-    topics = model.print_topics(10) # Topic ~ set of (related) words
-    print(topics)
+# if hasattr(model, 'print_topics'):
+#     print('Counting Topics...')
+#     topics = model.print_topics(10) # Topic ~ set of (related) words
+#     print(topics)
 
 # ??? Topics Count
 # print('Counting Topics...')
@@ -119,26 +119,32 @@ query_1 = "using deep learning for computer vision in real time"
 bow = dictionary.doc2bow(utils.get_cleaned_text( query_1 ).split())
 bag_of_words = [word for word in bow]
 
-# DEBUG
-# Bag Of Words ON Query
-# for word in bag_of_words:
-    # print('{}: {}'.format(word[0], dictionary[word[0]]))
+print('###########################')
+print( type(model) )
+print('###########################')
+print( model )
+print('###########################')
+
+# # DEBUG
+# # Bag Of Words ON Query
+# # for word in bag_of_words:
+#     # print('{}: {}'.format(word[0], dictionary[word[0]]))
 
 
-# Run Model on bag_of_words
-q_vec = model[bow]    # "query vector"
-# print(q_vec)
-print("==============")
-# ### LDA Topic Result Details
-topic_details = model.print_topic(max(q_vec, key=lambda item: item[1])[0])
-print(topic_details)
-print("==============")
+# # Run Model on bag_of_words
+# q_vec = model[bow]    # "query vector"
+# # print(q_vec)
+# print("==============")
+# # ### LDA Topic Result Details
+# topic_details = model.print_topic(max(q_vec, key=lambda item: item[1])[0])
+# print(topic_details)
+# print("==============")
 
-# ### Get Similarity of Query Vector to Document Vectors
-sims = utils.get_similarity(model, corpus, q_vec)
-# Sort High-to-Low by similarity
-sims = sorted(enumerate(sims), key=lambda item: -item[1])
-# RECCOMMEND:
-# ### Get Related Pages
-pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
+# # ### Get Similarity of Query Vector to Document Vectors
+# sims = utils.get_similarity(model, corpus, q_vec)
+# # Sort High-to-Low by similarity
+# sims = sorted(enumerate(sims), key=lambda item: -item[1])
+# # RECCOMMEND:
+# # ### Get Related Pages
+# pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
 
