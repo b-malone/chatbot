@@ -1,4 +1,6 @@
-*data*
 *example*
 *include*
+*lib*
+data/*
+web-services/data/*
 
