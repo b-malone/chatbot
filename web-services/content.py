@@ -41,7 +41,7 @@ class Content:
         return str(self.cursor.execute('SELECT content FROM content WHERE pageid=?', [pageid]).fetchone())
 
     def get_page_url_by_id(self, pageid):
-        return self.cursor.execute('SELECT url FROM content WHERE pageid={}'.format(pageid).fetchone()
+        return str(self.cursor.execute('SELECT url FROM content WHERE pageid=?', [pageid]).fetchone())
 
     def download_categories_and_members(self, category, depth):
         """

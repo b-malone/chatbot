@@ -3,7 +3,7 @@
 import sqlite3
 import scrapy
 import re
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 
 # $ scrapy runspider [scraper.py]
 
@@ -28,10 +28,30 @@ class CollegeNetHelpSpider(scrapy.Spider):
         # cursor.execute('CREATE TABLE IF NOT EXISTS content (pageid text, category text, url text, content text)')    
         # self.conn.commit()
         # self.cursor = self.conn.cursor()
+    # def parse(self, response):
+    #     for title in response.css('.post-header>h2'):
+    #         yield {'title': title.css('a ::text').get()}
+
+    #     for next_page in response.css('a.next-posts-link'):
+    #         yield response.follow(next_page, self.parse)
 
     def parse(self, response):
-        SET_SELECTOR = '#help-default-topics a'
-        for brickset in response.css(SET_SELECTOR):
-            pass
+        HELP_PAGE_LINK_SELECTOR = '#help-default-topics a'
+        HELP_TOPIC_SELECTOR = '.topic'
+        # for brickset in response.css(SET_SELECTOR):
+        #     pass
+
+        # Pull Help Page Data
+        for topic in response.css(HELP_TOPIC_SELECTOR):
+            NAME_SELECTOR = 'h1 ::text'
+            yield {
+                'title': topic.css(NAME_SELECTOR).extract_first(),
+            }
+
+        # Follow Links to Help Pages...
+        for next_page in response.css(HELP_PAGE_LINK_SELECTOR):
+            yield response.follow(next_page, self.parse)
+
+        
 
 

@@ -36,28 +36,30 @@ def load_content():
 
 def build_dictionary(content):
     # Create a Dictionary
-    ## Vector Space of words and word_count
-    if os.path.exists(DICT_BACKUP+'.json'):
-        should_rebuild = os.stat(DICT_BACKUP+'.json').st_size == 0
-    else:
-        should_rebuild = True
+    # BUG: Saved Dictionaries are not of Type Dictionary!
+    # should_rebuild = not utils.try_to_open_file(DICT_BACKUP)
+    should_rebuild = True
+    # print('Should Rebuild Dictionary = {}'.format(should_rebuild))
 
     return utils.build_dictionary(content, should_rebuild, DICT_BACKUP)
 
 def build_corpus(dictionary, content):
     # Create a Corpus
-    if os.path.exists(CORPUS_BACKUP+'.json'):
-        should_rebuild = os.stat(CORPUS_BACKUP+'.json').st_size == 0
-    else:
-        should_rebuild = True
-
+    # BUG: Saved Corpuses are not of Type Corpus!
+    # should_rebuild = not utils.try_to_open_file(CORPUS_BACKUP)
+    should_rebuild = True
+    # print('Should Rebuild Corpus = {}'.format(should_rebuild))
     return utils.build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP)
     # print('Corpus Size: {}'.format( len(corpus) ))
 
 def build_predictive_model(dictionary, corpus):
     # Build Model!
     BACKUP_FILE = 'data/' + model_config['MODEL_NAME'].lower() + '_model'
-    should_rebuild = os.stat(BACKUP_FILE).st_size == 0
+    # BUG: Saved Models are not of Type Model!
+    should_rebuild = not utils.try_to_open_file(BACKUP_FILE)
+
+    print('Should Rebuild Model = {}'.format(should_rebuild))
+
     # print('building model {}...'.foramat(model_config['MODEL_NAME']))
     return utils.build_model(dictionary, corpus, model_config, should_rebuild, BACKUP_FILE)
 
@@ -77,37 +79,7 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     bow = dictionary.doc2bow(utils.get_cleaned_text( query ).split())
     # bag_of_words = [word for word in bow]
 
-    
-    # ###########################
-    # <class 'list'>
-    # ###########################
-    # [(1506, 1), (2189, 1), (2746, 1), (3192, 1), (3316, 1)]
-    # ###########################
-    ###########################
-    # <class 'list'>
-    # ###########################
-    # [(1506, 1), (2189, 1), (2746, 1), (2761, 1), (3192, 1), (3681, 1)]
-    # ###########################
     model = build_predictive_model(dictionary, corpus)
-
-
-    # ###########################
-    # <class 'gensim.models.ldamodel.LdaModel'>
-    # ###########################
-    # LdaModel(num_terms=26033, num_topics=100, decay=0.5, chunksize=2000)
-    # ###########################
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #  *** Error Loadind LDA Model!
-    # ###########################
-    # <class 'list'>
-    # ###########################
-    # []
-    # ###########################
-    # print('###########################')
-    # print( type(model) )
-    # print('###########################')
-    # print( model )
-    # print('###########################')
 
     # MODEL
     # BACKUP_FILE = switch_model_backup_file(model_name)
@@ -127,18 +99,19 @@ def query_model(model_name, content, should_rebuild, FILES, query):
 
     print('###########################')
     print( pids )
-    print('###########################')
-    print( pids[0] )
-    print('###########################')
 
     result = {}
-    # for pid in pids:
-        # print('###########################')
-        # print( pid )
-        # # print( pid[0] )
-        # print('###########################')
-        # result[pid[0]] = content.get_page_url_by_id(pid[0])
+    for pid in pids:
+        url = content.get_page_url_by_id(pid)
+        print('###########################')
+        print( pid )
+        print( url[0] if isinstance(url, tuple) else url )
+        print('###########################')
+        result[pid] = url[0] if isinstance(url, tuple) else url
     
+    print('###########################')
+    print( result )
+    print('###########################')
     return result
 
     # # "Swtich Map" model functions

@@ -5,6 +5,7 @@ import json
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
 from gensim import similarities, corpora, models
+# from flask import g # "ENV vars" for flask apps
 
 lemma = WordNetLemmatizer()
 punctuation = set(string.punctuation)
@@ -54,6 +55,22 @@ def pickle_save(PATH, data):
         pickle.dump(data, fp)
     fp.close()
 
+def try_to_open_file(path):
+    """
+    Returns IF it's safe to open file in application.
+    TRUE IFF file exists and is openable,
+    FALSE otherwise
+    """
+    # file_exists = True
+    try:
+        f = open(path)
+        f.close()
+        return True
+    except FileNotFoundError:
+        # file_exists = False
+        return False
+    # return file_exists
+
 # def serialize_json(PATH, data):
 #     with open(PATH+'.json', 'w', encoding='utf-8') as f:
 #         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -81,6 +98,7 @@ def build_dictionary(content, should_rebuild, DICT_BACKUP):
     """
     dictionary = []
     DICT_FILE = get_file_path(DICT_BACKUP)
+    print('DICT_FILE = {}'.format(DICT_FILE))
 
     if not should_rebuild:
         try:
@@ -109,6 +127,7 @@ def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
     """
     corpus = []
     CORPUS_FILE = get_file_path(CORPUS_BACKUP)
+    print('CORPUS_FILE = {}'.format(CORPUS_FILE))
 
     if not should_rebuild:
         try:
@@ -117,6 +136,7 @@ def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
                     print('Loading Corpus File.')
                     # corpus = pickle.load(corp_file)
                     corpus = corpora.MmCorpus(corp_file+'.mm')
+                    print('corp_file_path = {}'.format(corp_file+'.mm'))
                     print('Corpus Size = {}'.format(len(corpus)))
         except:
             print('ERROR Building Corpus!')
@@ -151,6 +171,8 @@ def build_lda_model(dictionary, corpus, config, should_rebuild, LDA_BACKUP):
     if not should_rebuild:
         try:
             LDA = get_file_path(LDA_BACKUP)
+            print('LDA_FILE = {}'.format(LDA))
+
             if os.stat(LDA).st_size != 0:
                 # print('LDA_FILE = {}'.format(LDA))
                 with open(LDA, "a") as lda_file:
@@ -215,12 +237,25 @@ def get_unique_matrix_sim_values(sims, content, page_ids):
     index = 0
     result = 10
 
+    # index = 0
+    # sims[index] = (2238, 0.70462626)
+    # page_ids_index = 2238
+
     while result > 0:
-        page_id = page_ids[sims[index][0]]
-        if page_id not in pids:
+        # page_id = page_ids[sims[index][0]]
+        # print('index = {}'.format(index))
+        # print('sims[index] = {}'.format(sims[index]))
+        # sims[index] = (2238, 0.70462626)
+        page_ids_index = sims[index][0]
+        # print('page_ids_index = {}'.format(page_ids_index))
+        # print('TYPE page_ids = {}'.format(type(page_ids)))
+        page_id = page_ids[page_ids_index][0]
+        # print('page_id = {}'.format(page_id))
+        # print('type of page_id = {}'.format(type(page_id)))
+        if [page_id] not in pids:
             pids.append(page_id)
-            print('Page ID: {}'.format(page_id))
-            print('URL: {}'.format(content.get_page_url_by_id(page_id)))
+            # print('Page ID: {}'.format(page_id))
+            # print('URL: {}'.format(content.get_page_url_by_id(page_id)))
             result -= 1
         index += 1
     

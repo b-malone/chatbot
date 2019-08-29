@@ -5,18 +5,22 @@
 import logging
 import pickle
 import argparse
+from optparse import OptionParser
 from gensim import utils
 from flask import Flask, request, send_from_directory, send_file, jsonify, escape
 from flask_restful import Resource, Api
+# from flask import g # "ENV vars" for flask apps
 from werkzeug.exceptions import HTTPException, default_exceptions
-
+from colored_logging import ColoredLogger
 # import content
 import utils
 from server import LdaModelingServer, LsiModelingServer
 
 
 # ### Enable logging for Gensim
-logging.basicConfig(format='%(asctime)s : %(levelnam)s : %(message)s', level=logging.INFO)
+# logging.basicConfig(format='%(asctime)s : %(levelnam)s : %(message)s', level=logging.INFO)
+logging.setLoggerClass(ColoredLogger)
+
 # # ### Data Stores and backups
 # DATABASE_FILE = './data/wiki_content.db'
 # LDA_BACKUP    = './data/lda_model'
@@ -26,51 +30,35 @@ logging.basicConfig(format='%(asctime)s : %(levelnam)s : %(message)s', level=log
 
 # ARGS
 # ### --rebuild (force rebuild of model)
-parser = argparse.ArgumentParser(description='')
-parser.add_argument('--model', nargs='?', type=str, default='lda', help='Select the Model to use for Topic Modeling (LDA, LSI, NMF)')
-parser.add_argument('--rebuild', nargs='?', type=bool, default=False, help='Force rebuild of model')
-args = parser.parse_args()
-### ARGS PARSING
-if args.rebuild is None:
-    args.rebuild = True
+parser = OptionParser()
+parser.add_option('-m', '--model', nargs='?', type=str, default='lda', help='Select the Model to use for Topic Modeling (LDA, LSI, NMF)')
+parser.add_option('-r', '--rebuild', nargs='?', default=False, help='Force rebuild of model')
+# parser.add_option("-f", "--file", dest="filename",
+#                   help="write report to FILE", metavar="FILE")
+# parser.add_option("-q", "--quiet",
+#                   action="store_false", dest="verbose", default=True,
+#                   help="don't print status messages to stdout")
 
-should_rebuild = args.rebuild
-MODEL_NAME = args.model
+(options, args) = parser.parse_args()
+# parser = argparse.ArgumentParser(description='')
+# parser.add_argument('--model', nargs='?', type=str, default='lda', help='Select the Model to use for Topic Modeling (LDA, LSI, NMF)')
+# parser.add_argument('--rebuild', nargs='?', type=bool, default=False, help='Force rebuild of model')
+# args, unknown = parser.parse_args()
+### ARGS PARSING
+if options.rebuild is None:
+    options.rebuild = False 
+else:
+    options.rebuild = False 
+
+should_rebuild = options.rebuild
+MODEL_NAME = options.model
 print('MODEL_NAME: {}'.format(MODEL_NAME))
 print( type(MODEL_NAME) )
 print('SHOULD_REBUILD: {}'.format(should_rebuild))
 print( type(should_rebuild) )
 
-# RUN!
-# Model, stores
-# dictionary = corpora.Dictionary()
-# lemma = WordNetLemmatizer()
-
-# # Access DataBase content, 
-# # build content (Object) for modeling and analysis
-# DATABASE = utils.get_file_path(DATABASE_FILE)
-# content = content.Content(DATABASE)
-
-# # Create a Dictionary
-# ## Vector Space of words and word_count
-# dictionary = utils.build_dictionary(content, should_rebuild, DICT_BACKUP)
-
-# # Create a Corpus
-# corpus = utils.build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP)
-# print('Corpus Size: {}'.format( len(corpus) ))
-
-# # Configuration for modeling
-# model_config = {}
-# model_config['RANDOM_STATE'] = RANDOM_STATE if utils.variable_is_defined(RANDOM_STATE) else 1
-# model_config['NUM_TOPICS'] = NUM_TOPICS if utils.variable_is_defined(NUM_TOPICS) else 100
-# model_config['PASSES'] = NUM_PASSES if utils.variable_is_defined(NUM_PASSES) else 10
-# model_config['MODEL_NAME'] = MODEL_NAME if utils.variable_is_defined(MODEL_NAME) else 'lda'
-
-# # Build Model!
-# BACKUP_FILE = 'data/' + model_config['MODEL_NAME'].lower() + '_model'
-# print('building model {}...'.foramat(model_config['MODEL_NAME']))
-# model = utils.build_model(dictionary, corpus, model_config, should_rebuild, BACKUP_FILE)
-
+# g.should_rebuild = should_rebuild
+# g.MODEL_NAME = MODEL_NAME
 
 # Serve && Run (Queries)!
 PORT = 5000
