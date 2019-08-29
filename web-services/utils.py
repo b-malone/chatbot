@@ -210,25 +210,37 @@ def build_lsi_model(dictionary, corpus, config, should_rebuild, LSI_BACKUP):
     if not should_rebuild:
         try:
             LSI = get_file_path(LSI_BACKUP)
-            with open(LSI, "a") as lsi_file:
-                if lsi_file:
-                    print('Loading LSI File.')
-                    lsi = models.LsiModel.load(lsi_file)
+            print('LSI_FILE = {}'.format(LSI))
 
+            if os.stat(LSI).st_size != 0:
+                # print('LDA_FILE = {}'.format(LDA))
+                with open(LSI, "a") as lsi_file:
+                    if lsi_file:
+                        print('Loading LSI File.')
+                        lsi = models.LsiModel.load(lsi_file)
+            else:
+                print('Building LSI Model...')
+                lsi = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
+                print('Done!')
+                # Save Model Structures
+                LSI_FILE = get_file_path(LSI_BACKUP)
+                lsi.save(LSI_FILE)
         except:
-            print('Error Loadind LSI Model! Rebuilding...')
+            print(' *** Error Loadind LDA Model!')
             print('Building LSI Model...')
-            lsi = models.LsiModel(corpus, id2word=dictionary, num_topics=config['NUM_TOPICS'])
+            lsi = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
             print('Done!')
             # Save Model Structures
-            lsi.save(LSI_BACKUP)
+            LSI_FILE = get_file_path(LSI_BACKUP)
+            lsi.save(LSI_FILE)
 
     else:
         print('Building LSI Model...')
-        lsi = models.LsiModel(corpus, id2word=dictionary, num_topics=config['NUM_TOPICS'])
+        lsi = models.LsiModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
         print('Done!')
         # Save Model Structures
-        lsi.save(LSI_BACKUP)
+        LSI_FILE = get_file_path(LSI_BACKUP)
+        lsi.save(LSI_FILE)
 
     return lsi
 
