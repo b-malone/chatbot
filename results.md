@@ -6,7 +6,8 @@
 3316: vision
 
 ## LDA: query_1 = "using deep learning for computer vision in real time" 
-0.092*"Google" + 0.025*"language" + 0.019*"learning" + 0.014*"Assistant" + 0.012*"machine" + 0.011*"deep" + 0.009*"Now" + 0.008*"Googles" + 0.008*"project" + 0.008*"AI"
+###########################
+0.073*"network" + 0.056*"neural" + 0.029*"layer" + 0.018*"Neural" + 0.017*"neuron" + 0.017*"deep" + 0.016*"input" + 0.009*"weight" + 0.009*"image" + 0.008*"output"
 =====
   "32472154": "('https://en.wikipedia.org/wiki/Deep_learning',)", 
   "40267442": "('https://en.wikipedia.org/wiki/MNIST_database',)", 
@@ -18,7 +19,7 @@
 
 
 ## LSI: query_1 = "using deep learning for computer vision in real time" 
-0.241*"stylewidth" + 0.216*"scopecol" + 0.186*"data" + 0.185*"et" + 0.167*"human" + 0.156*"machine" + 0.155*"learning" + 0.140*"set" + 0.136*"model" + 0.133*"AI"
+0.073*"network" + 0.056*"neural" + 0.029*"layer" + 0.018*"Neural" + 0.017*"neuron" + 0.017*"deep" + 0.016*"input" + 0.009*"weight" + 0.009*"image" + 0.008*"output"
 =====
 {
   "32472154": "('https://en.wikipedia.org/wiki/Deep_learning',)", 

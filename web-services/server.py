@@ -58,6 +58,10 @@ def build_predictive_model(model_name, dictionary, corpus):
     # BUG: Saved Models are not of Type Model!
     should_rebuild = not utils.try_to_open_file(BACKUP_FILE)
 
+    print('###########################')
+    print('Model_Name = {}'.format(model_name))
+    print('###########################')
+
     print('Should Rebuild Model = {}'.format(should_rebuild))
 
     # print('building model {}...'.foramat(model_config['MODEL_NAME']))
@@ -98,8 +102,9 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
     # return pids 
 
-    # print('###########################')
-    # print( pids )
+    print('###########################')
+    print( topic_details )
+    print('###########################')
 
     result = {}
     for pid in pids:

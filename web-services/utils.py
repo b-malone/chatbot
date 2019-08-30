@@ -95,6 +95,8 @@ def get_cleaned_text(text):
 def build_dictionary(content, should_rebuild, DICT_BACKUP):
     """
        A  (Gensim) Dictionary is a map of unique words to unique IDs.
+
+       * Store Dictionary via corpora.dictionary.Dictionary.load/save
     """
     dictionary = []
     DICT_FILE = get_file_path(DICT_BACKUP)
@@ -106,7 +108,7 @@ def build_dictionary(content, should_rebuild, DICT_BACKUP):
                 if dict_file:
                     print('Loading Dictionary File.')
                     # load dict from disk
-                    dictionary = corpora.dictionary.load(dict_file)
+                    dictionary = corpora.dictionary.Dictionary.load(dict_file)
                     print('Dictionary Size = {}'.format(len(dictionary)))
         except:
             print('ERROR Building Dictionary!')
@@ -115,7 +117,7 @@ def build_dictionary(content, should_rebuild, DICT_BACKUP):
         dictionary = corpora.Dictionary(content)    # list: (word_id, appearance count)
         dictionary.filter_extremes(no_below=5, no_above=0.4)
         # SAVE the construction
-        dictionary.save(DICT_FILE)  # save dict to disk
+        corpora.dictionary.Dictionary.save(dictionary, DICT_FILE)  # save dict to disk
         print('Dictionary Size = {}'.format(len(dictionary)))
     
     return dictionary
@@ -124,6 +126,8 @@ def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
     """
         A (Gensim) Corpus is a "bag of words", which is a histogram map
         for unique and relevant words in a document.
+
+        * Store Corpus (A List) via Pickle
     """
     corpus = []
     CORPUS_FILE = get_file_path(CORPUS_BACKUP)
@@ -226,7 +230,7 @@ def build_lsi_model(dictionary, corpus, config, should_rebuild, LSI_BACKUP):
                 LSI_FILE = get_file_path(LSI_BACKUP)
                 lsi.save(LSI_FILE)
         except:
-            print(' *** Error Loadind LDA Model!')
+            print(' *** Error Loadind LSI Model!')
             print('Building LSI Model...')
             lsi = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
             print('Done!')
