@@ -121,7 +121,7 @@ class CollegeNetHelpSpider(scrapy.Spider):
         html = response.body
 
         # you can also query the html result as usual
-        title = response.css('title').extract_first()
+        title = response.css('#d25').extract_first()
 
         # full decoded JSON data is available as response.data:
         png_bytes = base64.b64decode(response.data['png'])
