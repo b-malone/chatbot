@@ -3,13 +3,18 @@
 import sqlite3
 import scrapy
 import re
+from scrapy.http import FormRequest
+
 # from bs4 import BeautifulSoup
 
 # $ scrapy runspider [scraper.py]
 
 class CollegeNetHelpSpider(scrapy.Spider):
     name = "collegenet_help_spider"
-    start_urls = ['https://25live.collegenet.com/burnside/scheduling.html#/help/home']
+    start_urls = [
+        'https://25live.collegenet.com/burnside/scheduling.html#/login',
+        'https://25live.collegenet.com/burnside/scheduling.html#/help/home'
+    ]
 
     def __init__(self, db_file):
         """ 

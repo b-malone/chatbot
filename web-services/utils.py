@@ -135,13 +135,9 @@ def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
 
     if not should_rebuild:
         try:
-            with open(CORPUS_FILE, "rb") as corp_file:
-                if corp_file:
-                    print('Loading Corpus File.')
-                    # corpus = pickle.load(corp_file)
-                    corpus = corpora.MmCorpus(corp_file+'.mm')
-                    print('corp_file_path = {}'.format(corp_file+'.mm'))
-                    print('Corpus Size = {}'.format(len(corpus)))
+            print('Loading Corpus File.')
+            corpus = pickle.load( open( corpus_file, "rb" ) )
+            print('Corpus Size = {}'.format(len(corpus)))
         except:
             print('ERROR Building Corpus!')
     else:
@@ -149,7 +145,7 @@ def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
         corpus = [dictionary.doc2bow(text) for text in content] # doc-to-bag_of_words
         # SAVE the construction
         # corpus.save(CORPUS_FILE)  # save corpus to disk
-        corpora.MmCorpus.serialize(CORPUS_FILE+'.mm', corpus) # save corpus to disk
+        pickle_save(CORPUS_FILE, corpus) # save corpus to disk
         print('Corpus Size = {}'.format(len(corpus)))
 
     return corpus
