@@ -104,12 +104,12 @@ def build_dictionary(content, should_rebuild, DICT_BACKUP):
 
     if not should_rebuild:
         try:
-            with open(DICT, "rb") as dict_file:
-                if dict_file:
-                    print('Loading Dictionary File.')
-                    # load dict from disk
-                    dictionary = corpora.dictionary.Dictionary.load(dict_file)
-                    print('Dictionary Size = {}'.format(len(dictionary)))
+            # with open(DICT, "rb") as dict_file:
+            #     if dict_file:
+            print('Loading Dictionary File.')
+            # load dict from disk
+            dictionary = corpora.dictionary.Dictionary.load(DICT_FILE)
+            print('Dictionary Size = {}'.format(len(dictionary)))
         except:
             print('ERROR Building Dictionary!')
     else:

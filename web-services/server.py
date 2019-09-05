@@ -144,7 +144,7 @@ def query_model(model_name, content, should_rebuild, FILES, query):
 
 class LdaModelingServer(Resource):
     def post(self):
-        MODEL_NAME = 'lda'
+        model_config['MODEL_NAME'] = 'lda'
         json_data = request.get_json(force=True)
         result = {}
         if 'query' in json_data:
@@ -161,7 +161,7 @@ class LdaModelingServer(Resource):
 
 class LsiModelingServer(Resource):
     def post(self):
-        MODEL_NAME = 'lsi'
+        model_config['MODEL_NAME'] = 'lsi'
         json_data = request.get_json(force=True)
         result = {}
         if 'query' in json_data:
