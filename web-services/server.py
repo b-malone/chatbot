@@ -8,7 +8,7 @@ import content
 import utils
 
 # ### Data Stores and backups
-DATABASE_FILE = 'data/wiki_content.db'
+DATABASE_FILE = 'data/help.db'
 LDA_BACKUP    = 'data/lda_model'
 LSI_BACKUP    = 'data/lsi_model'
 DICT_BACKUP   = 'data/dictionary'

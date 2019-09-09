@@ -21,13 +21,6 @@ from server import LdaModelingServer, LsiModelingServer
 # logging.basicConfig(format='%(asctime)s : %(levelnam)s : %(message)s', level=logging.INFO)
 logging.setLoggerClass(ColoredLogger)
 
-# # ### Data Stores and backups
-# DATABASE_FILE = './data/wiki_content.db'
-# LDA_BACKUP    = './data/lda_model'
-# LSI_BACKUP    = './data/lsi_model'
-# DICT_BACKUP   = './data/dictionary'
-# CORPUS_BACKUP = './data/corpus'
-
 # ARGS
 # ### --rebuild (force rebuild of model)
 parser = OptionParser()

@@ -2,4 +2,6 @@
 *lib*
 data/*
 web-services/data/*
-
+*/spiders/pages/*
+*.cfg*
+*_pycache_*

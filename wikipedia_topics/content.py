@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 import utils
 
-class Content:
+class WikipediaContent:
     def __init__(self, db_file):
         """ 
         Initialize the crawler class for getting data from Wikipedia.
