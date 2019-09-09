@@ -4,6 +4,9 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy_splash import SplashRequest
 import logging
 import base64
+import json
+import os
+import pickle
 
 # DEBUGGING
 # scrapy shell 'http://quotes.toscrape.com/'
@@ -65,6 +68,33 @@ class HelpSpider(scrapy.Spider):
         },
         'DUPEFILTER_CLASS': 'scrapy_splash.SplashAwareDupeFilter',
     }
+
+    debug_script="""
+    function main(splash, args)
+        assert(splash:go(args.url))
+        assert(splash:wait(3))
+
+        splash:set_viewport_full()
+        splash.response_body_enabled = true
+        -- splash.private_mode_enabled = false
+
+        local search_input = splash:select('input[name=username]')   
+        search_input:send_text("r25admin")
+        local search_input = splash:select('input[name=password]')
+        search_input:send_text("r25admin")
+        assert(splash:wait(1))
+        local submit_button = assert(splash:select('form[name="login"] button'))
+        submit_button:click()
+
+        assert(splash:wait(3))
+
+        local title = "TEST"
+        return {
+            title = title,
+            url = splash:url()
+        }
+    end
+    """
 
     # Returns a list of Help Page links to visit in a loop and pull content.
     burnside_help_script="""
@@ -147,75 +177,127 @@ class HelpSpider(scrapy.Spider):
 
     def visit_help_page_script(self, i, index_url):
         # "{html=splash:html(),png=splash:png(), href=href,}"
+        # return_attrs = """{
+        #     html = splash:html(),
+        #     png = splash:png(),
+        #     har = splash:har(),
+        #     url =  topic_page_url,
+        #     title = title
+        # }"""
+        # return_attrs = """{
+        #     url =  topic_page_url
+        # }"""
         return_attrs = """{
-            html = splash:html(),
-            png = splash:png(),
-            har = splash:har(),
-            url =  topic_page_url,
-            title = title
+            hash = hash,
+            title = title,
+            url = topic_page_url,
+            content = text
         }"""
+        _script_a = """
+        function main(splash, args)
+            assert(splash:go(args.url))
+            assert(splash:wait(3))
 
-        _script_a="""
-            function main(splash, args)
-                -- Visit each Help Topic Page...
-                splash:runjs('document.querySelectorAll("#help-default-topics a")[{}].click()')
-                assert(splash:wait(3))
-        """.format(i)
-        _script_b="""
-                local getTextContent = function(sel)
-                    local js = string.format([[
-                        var el = document.querySelector("%s");
-                        el.textContent;
-                        ]], sel)
-                    return splash:evaljs(js)
-                end
-        """
-        _script_c="""
-                -- local content = splash:runjs('document.querySelectorAll("").text()')
-                -- * Get Topic Page Title
-                local title = getTextContent("h1.title")
+            splash:set_viewport_full()
+            splash.response_body_enabled = true
+            -- splash.private_mode_enabled = false
 
-                local topic_page_url = splash:url()
+            local search_input = splash:select('input[name=username]')   
+            search_input:send_text("r25admin")
+            local search_input = splash:select('input[name=password]')
+            search_input:send_text("r25admin")
+            assert(splash:wait(1))
+            local submit_button = assert(splash:select('form[name="login"] button'))
+            submit_button:click()
 
-                -- "Reset" Navigation to Help Index Page
-                local help_index_url = {}
-
-                assert(splash:go(help_index_url))
-                assert(splash:wait(3))
-
-                return {}
+            assert(splash:wait(3))
+            
+            local help_link = splash:select('a[href="#/help"]')
+            help_link:click()
+            
+            assert(splash:wait(5))
+            
+            local help_index_link = splash:url()
+            
+            local getTextContent = function(sel)
+                local js = string.format([[
+                var el = document.querySelector("%s");
+                el.textContent;
+                ]], sel)
+                return splash:evaljs(js)
             end
-        """.format(index_url, return_attrs)
-        # _script = """
-        #     function main(splash)
-        #         local url = splash.args.url
-        #         local help_index_url = "https://25live.collegenet.com/burnside/scheduling.html#/help/home"
-        #         -- local href = ""
-        #         assert(splash:go(url))
-        #         assert(splash:wait(3))
 
+            local countHelpTopicPageLinks = function(sel)
+                local js = string.format([[
+                var el = document.querySelectorAll("%s");
+                el.length;
+                ]], sel)
+                return splash:evaljs(js)
+            end
+
+            local getUrlHash = function(sel)
+                local js = 'window.location.hash'
+                return splash:evaljs(js)
+            end
+        """
+
+        _script_b = """
+             -- Visit each Help Topic Page...
+            splash:runjs('document.querySelectorAll("#help-default-topics a")[{}].click()')
+            assert(splash:wait(3))
+
+            --local num_links = countHelpTopicPageLinks("#help-default-topics a")
+            -- * Get Topic Page Title
+            local title = getTextContent("h1.title")
+            local text = getTextContent(".help-item")
+            local topic_page_url = splash:url()
+
+            -- "Reset" Navigation to Help Index Page
+            local help_index_url = "{}"
+            local hash = getUrlHash()
+
+            assert(splash:go(help_index_url))
+            assert(splash:wait(3))
+
+            return {}
+        end
+        """.format(i, index_url, return_attrs)
+
+        # _script_a="""
+        #     function main(splash, args)
+        #         -- Visit each Help Topic Page...
         #         splash:runjs('document.querySelectorAll("#help-default-topics a")[{}].click()')
-        #         splash:wait(3)
+        #         assert(splash:wait(3))
+        # """.format(i)
+        # _script_b="""
+        #         local getTextContent = function(sel)
+        #             local js = string.format([[
+        #                 var el = document.querySelector("%s");
+        #                 el.textContent;
+        #                 ]], sel)
+        #             return splash:evaljs(js)
+        #         end
+        # """
+        # _script_c="""
+        #         -- local content = splash:runjs('document.querySelectorAll("").text()')
+        #         -- * Get Topic Page Title
+        #         -- local title = getTextContent("h1.title")
 
-        #         --  Scrape!
+        #         local topic_page_url = splash:url()
 
+        #         -- "Reset" Navigation to Help Index Page
+        #         local help_index_url = {}
 
-        #         -- "Reset" Navigation to Help Index page
         #         assert(splash:go(help_index_url))
         #         assert(splash:wait(3))
 
         #         return {}
         #     end
-        #     """.format(n, return_attrs)
-        return _script_a + _script_b + _script_c
+        # """.format(index_url, return_attrs)
+
+        return _script_a + _script_b
 
     def start_requests(self):
-        # for url in ['https://25live.collegenet.com/burnside/scheduling.html']: # self.start_urls:
-        # urls = [
-        #     self.start_urls[0],
-        #     self.start_urls[1]
-        # ]
-
         yield SplashRequest(
             self.start_urls[0], 
             self.parse,
@@ -238,23 +320,38 @@ class HelpSpider(scrapy.Spider):
         data = response.data
 
         logger.warning("####################")
+        # logger.warning("data['index_url'] = {}".format(data['index_url']))
+        # logger.warning("####################")
+
         n = data['count']
         for i in range(n):
             # Visit Help Page #i
             # *** Starting from Help Index Page EACH loop
                 # (includes "reset" of navigation to the help index page inside script)
-            yield SplashRequest(response.url, self.parse_help_page,
+            help_page_script = self.visit_help_page_script(i, data['index_url'])
+            # filepath = self.get_file_path('scripts/script'+str(i)+'.text')
+            # logger.warning( 'filepath={}'.format(filepath) )
+
+            # logger.warning("i = {}".format(i))
+            # logger.warning("####################")
+
+            # with open(filepath, 'w+') as outfile:
+            #     outfile.write( lua_script )
+            #     outfile.close()
+                # json.dump(outfile, lua_script)
+
+            yield SplashRequest(
+                self.start_urls[0],
+                self.parse_help_page,
                 endpoint="execute",
-                args={"lua_source": self.visit_help_page_script(i, data['index_url'])},
-                dont_filter=True)
+                args={"lua_source": help_page_script},
+                dont_filter=True
+            )
 
-        # yield SplashRequest(response.url, self.parse_help_page,
-        #     endpoint="execute",
-        #     args={"lua_source": self.visit_help_page_script(0)},
-        #     dont_filter=True)
-
-        # for item in response:
-            # logger.log(item)
+            # yield SplashRequest(response.url, self.parse_help_page,
+            #     endpoint="execute",
+            #     args={"lua_source": self.visit_help_page_script(i, data['index_url'])},
+            #     dont_filter=True)
 
         # logger.warning(data['index_url'])
         # logger.warning(data['count'])
@@ -272,13 +369,48 @@ class HelpSpider(scrapy.Spider):
         #     logger.log(item)
 
         # logger.warning("####################")
+    
+    def get_file_path(self, rel_filepath):
+        script_path = os.path.abspath(__file__) 
+        script_dir  = os.path.split(script_path)[0] 
+        abs_file_path = os.path.join(script_dir, rel_filepath)
+
+        return abs_file_path
   
 
     def parse_help_page(self, response):
         logger = logging.getLogger()
-        logger.info(response.title)
-        logger.info(response.url)
+        # logger.warning(response.title)
+        # logger.warning(response.url)
         # logger.info("\n")
+
+        logger.warning("####################")
+
+        logger.warning( type(response.data) )
+        logger.warning(response.data)
+
+        try:
+            logger.warning(response.data['title'])
+        except:
+            logger.warning("NO TITLE PROP")
+
+        try:
+            logger.warning(response.data['hash'])
+        except:
+            logger.warning("NO hash PROP")
+
+        # logger.warning(response.data.title)
+        # logger.warning(response.data.url)
+        hash_last = response.data['hash'].split("/")
+        filepath = self.get_file_path('pages/help/{}.json'.format(hash_last[-1]))
+        with open(filepath, 'w+') as outfile:
+            # results = {}
+            # results['title'] = response.data['title']
+            # json.dump(outfile, response.data)
+            json.dump(response.data, outfile)
+            # pickle.dump(response.data, outfile)
+
+        logger.warning("####################")
 
         # print("PARSED", response.real_url, response.url)
         # print(response.css("title").extract())
