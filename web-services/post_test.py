@@ -12,6 +12,8 @@ import requests
 #         --data '{"query": "how do I schedule an event?"}' 
 #         http://localhost:5000/topics/lda
 
+# curl --header "Content-Type: application/json" --request POST --data '{"query": "how do I schedule an event?"}' http://localhost:5000/topics/lda
+
 
 headers = {
     'Content-Type': 'application/json',

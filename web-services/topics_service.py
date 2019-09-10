@@ -1,99 +1,178 @@
-"""
-    LDA\LSI Topic Modeling Service
-        Listen for HTTP requests and return a JSON list of (related topic) documents.
-"""
-import logging
-import pickle
-import argparse
-from optparse import OptionParser
-from gensim import utils
-from flask import Flask, request, send_from_directory, send_file, jsonify, escape
-from flask_restful import Resource, Api
-# from flask import g # "ENV vars" for flask apps
-from werkzeug.exceptions import HTTPException, default_exceptions
-from colored_logging import ColoredLogger
+import os
+# import json
+from flask import send_from_directory, send_file, escape, jsonify
+from flask_restful import Resource, Api, request
+from gensim import corpora
+
 # import content
+import help_content as content
 import utils
-from server import LdaModelingServer, LsiModelingServer
+
+# ### Data Stores and backups
+DATABASE_FILE = 'data/help.db'
+LDA_BACKUP    = 'data/lda_model'
+LSI_BACKUP    = 'data/lsi_model'
+DICT_BACKUP   = 'data/dictionary'
+CORPUS_BACKUP = 'data/corpus'
+
+# Model Configuration 
+NUM_PASSES=10
+NUM_TOPICS=100
+RANDOM_STATE=1
+MODEL_NAME='lda'
+
+# Configuration for modeling
+model_config = {}
+model_config['RANDOM_STATE'] = RANDOM_STATE if utils.variable_is_defined(RANDOM_STATE) else 1
+model_config['NUM_TOPICS'] = NUM_TOPICS if utils.variable_is_defined(NUM_TOPICS) else 100
+model_config['PASSES'] = NUM_PASSES if utils.variable_is_defined(NUM_PASSES) else 10
+model_config['MODEL_NAME'] = MODEL_NAME if utils.variable_is_defined(MODEL_NAME) else 'lda'
 
 
-# ### Enable logging for Gensim
-# logging.basicConfig(format='%(asctime)s : %(levelnam)s : %(message)s', level=logging.INFO)
-logging.setLoggerClass(ColoredLogger)
+def load_content():
+    # Access DataBase content, 
+    # build content (Object) for modeling and analysis
+    DATABASE = utils.get_file_path(DATABASE_FILE)
+    return content.Content(DATABASE)
 
-# ARGS
-# ### --rebuild (force rebuild of model)
-parser = OptionParser()
-parser.add_option('-m', '--model', nargs='?', type=str, default='lda', help='Select the Model to use for Topic Modeling (LDA, LSI, NMF)')
-parser.add_option('-r', '--rebuild', nargs='?', default=False, help='Force rebuild of model')
-# parser.add_option("-f", "--file", dest="filename",
-#                   help="write report to FILE", metavar="FILE")
-# parser.add_option("-q", "--quiet",
-#                   action="store_false", dest="verbose", default=True,
-#                   help="don't print status messages to stdout")
+def build_dictionary(content):
+    # Create a Dictionary
+    # BUG: Saved Dictionaries are not of Type Dictionary!
+    # should_rebuild = not utils.try_to_open_file(DICT_BACKUP)
+    should_rebuild = True
+    # print('Should Rebuild Dictionary = {}'.format(should_rebuild))
 
-(options, args) = parser.parse_args()
-# parser = argparse.ArgumentParser(description='')
-# parser.add_argument('--model', nargs='?', type=str, default='lda', help='Select the Model to use for Topic Modeling (LDA, LSI, NMF)')
-# parser.add_argument('--rebuild', nargs='?', type=bool, default=False, help='Force rebuild of model')
-# args, unknown = parser.parse_args()
-### ARGS PARSING
-if options.rebuild is None:
-    options.rebuild = False 
-else:
-    options.rebuild = False 
+    return utils.build_dictionary(content, should_rebuild, DICT_BACKUP)
 
-should_rebuild = options.rebuild
-MODEL_NAME = options.model
-print('MODEL_NAME: {}'.format(MODEL_NAME))
-print( type(MODEL_NAME) )
-print('SHOULD_REBUILD: {}'.format(should_rebuild))
-print( type(should_rebuild) )
+def build_corpus(dictionary, content):
+    # Create a Corpus
+    # BUG: Saved Corpuses are not of Type Corpus!
+    # should_rebuild = not utils.try_to_open_file(CORPUS_BACKUP)
+    should_rebuild = True
+    # print('Should Rebuild Corpus = {}'.format(should_rebuild))
+    return utils.build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP)
+    # print('Corpus Size: {}'.format( len(corpus) ))
 
-# g.should_rebuild = should_rebuild
-# g.MODEL_NAME = MODEL_NAME
+def build_predictive_model(model_name, dictionary, corpus):
+    # Build Model!
+    BACKUP_FILE = 'data/' + model_name.lower() + '_model'
+    # BUG: Saved Models are not of Type Model!
+    should_rebuild = not utils.try_to_open_file(BACKUP_FILE)
 
-# Serve && Run (Queries)!
-PORT = 5000
-app = Flask(__name__,static_url_path='')
-api = Api(app)
+    print('###########################')
+    print('Model_Name = {}'.format(model_name))
+    print('###########################')
 
-#
-# curl --header "Content Type: application/json" --request POST --data '{"query" :""}' URL
-#
+    print('Should Rebuild Model = {}'.format(should_rebuild))
 
-# @app.route("/topics/lda", methods=['POST'])
-# def lda():
-#     if request.method == 'POST':
-#         # note = str(request.data.get('text', ''))
-#         query = request.data.get('query', '')
-#         return lda_model_response(query)
+    # print('building model {}...'.foramat(model_config['MODEL_NAME']))
+    model_config['MODEL_NAME'] = model_name
+    return utils.build_model(dictionary, corpus, model_config, should_rebuild, BACKUP_FILE)
 
-# api.add_resource(TopicModelingServer, '/topics')
-api.add_resource(LdaModelingServer, '/topics/lda')
-api.add_resource(LsiModelingServer, '/topics/lsi')
+def switch_model_backup_file(model_name):
+    switcher = {'lda': LDA_BACKUP, 'lsi': LSI_BACKUP}
+    return switcher.get(model_name)
 
-# Disable Caching (Development)
-app.config["CACHE_TYPE"] = "null"
+def query_model(model_name, content, should_rebuild, FILES, query):
+    # Create a Dictionary
+    ## Vector Space of words and word_count
+    dictionary = build_dictionary(content)
 
-# DEBUG
-@app.route('/')
-def hello():
-    name = request.args.get("name", "World")
-    return f'Hello, {escape(name)}!'
+    # Create a Corpus
+    corpus = build_corpus(dictionary, content)
 
-# Handle/Return Errors (Debugging)
-def handle_error(error):
-    code = 500
-    if isinstance(error, HTTPException):
-        code = error.code
-    return jsonify(error='error', code=code)
+    # bow = corpora.Dictionary().doc2bow(utils.get_cleaned_text( query ).split())
+    bow = dictionary.doc2bow(utils.get_cleaned_text( query ).split())
+    # bag_of_words = [word for word in bow]
 
-for exc in default_exceptions:
-    app.register_error_handler(exc, handle_error)
+    model = build_predictive_model(model_name, dictionary, corpus)
 
-if __name__ == '__main__':
-    # $ python lda_service.py => http://localhost:5000/lda
-    app.run(host='0.0.0.0', port=PORT)
+    # MODEL
+    # BACKUP_FILE = switch_model_backup_file(model_name)
+    # model = build_predictive_model(dictionary, corpus)
+    q_vec = model[bow]    # "query vector"
+    topic_details = model.print_topic(max(q_vec, key=lambda item: item[1])[0])
+
+    # ### Get Similarity of Query Vector to Document Vectors
+    sims = utils.get_similarity(model, corpus, q_vec)
+    # Sort High-to-Low by similarity
+    sims = sorted(enumerate(sims), key=lambda item: -item[1])
+    # ###
+    # RECCOMMEND/TOPICS RESULT:
+    # ### Get Related Pages
+    pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
+    # return pids 
+
+    print('###########################')
+    print( topic_details )
+    print('###########################')
+
+    result = {}
+    for pid in pids:
+        url = content.get_page_url_by_id(pid)
+        # print('###########################')
+        # print( pid )
+        # print( url[0] if isinstance(url, tuple) else url )
+        # print('###########################')
+        result[pid] = url[0] if isinstance(url, tuple) else url
+    
+    # print('###########################')
+    # print( result )
+    # print('###########################')
+    return result
+
+    # # "Swtich Map" model functions
+    # def lda():  
+    # return []
 
 
+# def lda_model_response(query):
+#     # json_data = request.get_json(force=True)
+#     result = {}
+#     if query: # 'query' in json_data:
+#         FILES = {'DICT': DICT_BACKUP, 'CORPUS': CORPUS_BACKUP}
+#         should_rebuild = os.stat(LDA_BACKUP).st_size == 0
+#         content = load_content()
+#         # Query the Model
+#         # query_model(model_name, content, should_rebuild, FILES, query)
+#         # result.update( query_model('lda', content, should_rebuild, FILES, json_data['query']) )
+#         result.update( query_model('lda', content, should_rebuild, FILES, query) )
+#     else:
+#         result = 'Error: INVALID JSON REQUEST'
+    
+#     return result
+
+
+class LdaModelingServer(Resource):
+    def post(self):
+        model_config['MODEL_NAME'] = 'lda'
+        json_data = request.get_json(force=True)
+        result = {}
+        if 'query' in json_data:
+            FILES = {'DICT': DICT_BACKUP, 'CORPUS': CORPUS_BACKUP}
+            should_rebuild = os.stat(LDA_BACKUP).st_size == 0
+            content = load_content()
+            
+            # Query the Model
+            result = jsonify( query_model('lda', content, should_rebuild, FILES, json_data['query']) )
+        else:
+            result = 'Error: INVALID JSON REQUEST'
+        
+        return result
+
+class LsiModelingServer(Resource):
+    def post(self):
+        model_config['MODEL_NAME'] = 'lsi'
+        json_data = request.get_json(force=True)
+        result = {}
+        if 'query' in json_data:
+            FILES = {'DICT': DICT_BACKUP, 'CORPUS': CORPUS_BACKUP}
+            should_rebuild = os.stat(LSI_BACKUP).st_size == 0
+            content = load_content()
+
+            # Query the Model
+            result = jsonify( query_model('lsi', content, should_rebuild, FILES, json_data['query']) )
+        else:
+            result = 'Error: INVALID JSON REQUEST'
+        
+        return result
