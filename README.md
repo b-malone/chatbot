@@ -15,6 +15,19 @@
       -- python wikipedia_topics/main.py
       -- (CLI options) --rebuild=True,False (rebuild models and structures) --model=lad,lsi (which topic modeling algorithm to use)
    - (Web Service)
+      -- cd /web-services
+      -- Create and Activate Python 3.7 virtual environment (with Anaconda)
+         * conda create --name venv python=3.7.3
+         * conda activate venv
+      -- Install pip(3) packages/dependencies:
+         * pip install -r requirements.txt 
+      -- !!! Might need to fix PyCurl compilation issue (mentions SSL):
+         * pip uninstall pycurl
+         * export PYCURL_SSL_LIBRARY=openssl
+         * pip install pycurl --no-cache-dir
+      -- (Development) Run Flask App
+         * python -m flask run
+         * Endpoints at http://localhost:5000/*
       -- docker-compose build
       -- docker-compose up
       -- http://localhost:5000
