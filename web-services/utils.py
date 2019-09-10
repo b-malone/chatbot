@@ -24,13 +24,8 @@ def get_similarity(lda, corpus, q_vec):
     return sims
 
 def get_file_path(rel_filepath):
-    # dir_path = os.path.split( os.path.dirname(__file__) )
-    # print('dir_path = {}'.format(dir_path))
-    # path = os.path.join(dir_path[0], rel_filepath)
-    # print('path = {}'.format(path))
-    script_path = os.path.abspath(__file__) # i.e. /path/to/dir/foobar.py
-    script_dir  = os.path.split(script_path)[0] #i.e. /path/to/dir/
-    # rel_path = "2091/data.txt"
+    script_path = os.path.abspath(__file__)
+    script_dir  = os.path.split(script_path)[0]
     abs_file_path = os.path.join(script_dir, rel_filepath)
 
     return abs_file_path

@@ -5,7 +5,8 @@ from flask_restful import Resource, Api, request
 from gensim import corpora
 
 # import content
-import help_content as content
+from help_content
+# from help_content import HelpContent as content
 import utils
 
 # ### Data Stores and backups
@@ -33,14 +34,15 @@ def load_content():
     # Access DataBase content, 
     # build content (Object) for modeling and analysis
     DATABASE = utils.get_file_path(DATABASE_FILE)
-    return content.Content(DATABASE)
+    return content.HelpContent(DATABASE)
+    # return content(DATABASE)
 
 def build_dictionary(content):
     # Create a Dictionary
     # BUG: Saved Dictionaries are not of Type Dictionary!
     # should_rebuild = not utils.try_to_open_file(DICT_BACKUP)
     should_rebuild = True
-    # print('Should Rebuild Dictionary = {}'.format(should_rebuild))
+    print('Should Rebuild Dictionary = {}'.format(should_rebuild))
 
     return utils.build_dictionary(content, should_rebuild, DICT_BACKUP)
 
@@ -49,7 +51,7 @@ def build_corpus(dictionary, content):
     # BUG: Saved Corpuses are not of Type Corpus!
     # should_rebuild = not utils.try_to_open_file(CORPUS_BACKUP)
     should_rebuild = True
-    # print('Should Rebuild Corpus = {}'.format(should_rebuild))
+    print('Should Rebuild Corpus = {}'.format(should_rebuild))
     return utils.build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP)
     # print('Corpus Size: {}'.format( len(corpus) ))
 
@@ -120,27 +122,6 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     # print( result )
     # print('###########################')
     return result
-
-    # # "Swtich Map" model functions
-    # def lda():  
-    # return []
-
-
-# def lda_model_response(query):
-#     # json_data = request.get_json(force=True)
-#     result = {}
-#     if query: # 'query' in json_data:
-#         FILES = {'DICT': DICT_BACKUP, 'CORPUS': CORPUS_BACKUP}
-#         should_rebuild = os.stat(LDA_BACKUP).st_size == 0
-#         content = load_content()
-#         # Query the Model
-#         # query_model(model_name, content, should_rebuild, FILES, query)
-#         # result.update( query_model('lda', content, should_rebuild, FILES, json_data['query']) )
-#         result.update( query_model('lda', content, should_rebuild, FILES, query) )
-#     else:
-#         result = 'Error: INVALID JSON REQUEST'
-    
-#     return result
 
 
 class LdaModelingServer(Resource):

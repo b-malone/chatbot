@@ -14,10 +14,9 @@ class HelpContent:
         """        
         # Create DB
         self.conn = sqlite3.connect(db_file)
-        cursor = self.conn.cursor()
         # Create Table for Pages
-        cursor.execute('CREATE TABLE IF NOT EXISTS help_content \
-            (title text, hash text, url text, content text)')  
+        # self.conn.cursor().execute('CREATE TABLE IF NOT EXISTS help_content \
+        #     (title text, hash text, url text, content text)')  
         self.conn.commit()
         self.cursor = self.conn.cursor()
 
@@ -32,22 +31,22 @@ class HelpContent:
         self.conn.commit()
 
     def get_page_urls(self):
-        return []
+        return [url for url in self.cursor.execute('SELECT url FROM help_content').fetchall()]
 
     def get_page_hashes(self):
-        return []
+        return [h for h in self.cursor.execute('SELECT hash FROM help_content').fetchall()]
 
     def get_page_by_hash(self, hashKey):
-        return []
+        return str(self.cursor.execute('SELECT content FROM help_content WHERE hash=?', [hashKey]).fetchone())
 
     def get_cleaned_pages(self):
         pages = list()
 
-        # for pageid in self.get_page_ids():
-        #     page_id = pageid[0]
-        #     page_content = self.get_page_by_id(page_id)
-        #     clean_text = utils.get_cleaned_text(page_content).split()
-        #     pages.append(clean_text)
+        for page_hash in self.get_page_hashes():
+            # page_id = pageid[0]
+            page_content = self.get_page_by_hash(page_hash)
+            clean_text = utils.get_cleaned_text(page_content).split()
+            pages.append(clean_text)
 
         return pages
 
