@@ -44,7 +44,9 @@ class HelpContent:
 
         for page_hash in self.get_page_hashes():
             # page_id = pageid[0]
-            page_content = self.get_page_by_hash(page_hash)
+            # print("###################")
+            # print('page_hash={}'.format(page_hash))
+            page_content = self.get_page_by_hash(page_hash[0])
             clean_text = utils.get_cleaned_text(page_content).split()
             pages.append(clean_text)
 

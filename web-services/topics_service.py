@@ -5,7 +5,7 @@ from flask_restful import Resource, Api, request
 from gensim import corpora
 
 # import content
-from help_content
+import help_content
 # from help_content import HelpContent as content
 import utils
 
@@ -34,14 +34,14 @@ def load_content():
     # Access DataBase content, 
     # build content (Object) for modeling and analysis
     DATABASE = utils.get_file_path(DATABASE_FILE)
-    return content.HelpContent(DATABASE)
+    return help_content.HelpContent(DATABASE)
     # return content(DATABASE)
 
 def build_dictionary(content):
     # Create a Dictionary
     # BUG: Saved Dictionaries are not of Type Dictionary!
-    # should_rebuild = not utils.try_to_open_file(DICT_BACKUP)
-    should_rebuild = True
+    should_rebuild = not utils.try_to_open_file(DICT_BACKUP)
+    # should_rebuild = True
     print('Should Rebuild Dictionary = {}'.format(should_rebuild))
 
     return utils.build_dictionary(content, should_rebuild, DICT_BACKUP)
@@ -49,8 +49,8 @@ def build_dictionary(content):
 def build_corpus(dictionary, content):
     # Create a Corpus
     # BUG: Saved Corpuses are not of Type Corpus!
-    # should_rebuild = not utils.try_to_open_file(CORPUS_BACKUP)
-    should_rebuild = True
+    should_rebuild = not utils.try_to_open_file(CORPUS_BACKUP)
+    # should_rebuild = True
     print('Should Rebuild Corpus = {}'.format(should_rebuild))
     return utils.build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP)
     # print('Corpus Size: {}'.format( len(corpus) ))
@@ -87,36 +87,36 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     bow = dictionary.doc2bow(utils.get_cleaned_text( query ).split())
     # bag_of_words = [word for word in bow]
 
-    model = build_predictive_model(model_name, dictionary, corpus)
+    # model = build_predictive_model(model_name, dictionary, corpus)
 
-    # MODEL
-    # BACKUP_FILE = switch_model_backup_file(model_name)
-    # model = build_predictive_model(dictionary, corpus)
-    q_vec = model[bow]    # "query vector"
-    topic_details = model.print_topic(max(q_vec, key=lambda item: item[1])[0])
+    # # MODEL
+    # # BACKUP_FILE = switch_model_backup_file(model_name)
+    # # model = build_predictive_model(dictionary, corpus)
+    # q_vec = model[bow]    # "query vector"
+    # topic_details = model.print_topic(max(q_vec, key=lambda item: item[1])[0])
 
-    # ### Get Similarity of Query Vector to Document Vectors
-    sims = utils.get_similarity(model, corpus, q_vec)
-    # Sort High-to-Low by similarity
-    sims = sorted(enumerate(sims), key=lambda item: -item[1])
-    # ###
-    # RECCOMMEND/TOPICS RESULT:
-    # ### Get Related Pages
-    pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
-    # return pids 
+    # # ### Get Similarity of Query Vector to Document Vectors
+    # sims = utils.get_similarity(model, corpus, q_vec)
+    # # Sort High-to-Low by similarity
+    # sims = sorted(enumerate(sims), key=lambda item: -item[1])
+    # # ###
+    # # RECCOMMEND/TOPICS RESULT:
+    # # ### Get Related Pages
+    # pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
+    # # return pids 
 
-    print('###########################')
-    print( topic_details )
-    print('###########################')
+    # print('###########################')
+    # print( topic_details )
+    # print('###########################')
 
     result = {}
-    for pid in pids:
-        url = content.get_page_url_by_id(pid)
-        # print('###########################')
-        # print( pid )
-        # print( url[0] if isinstance(url, tuple) else url )
-        # print('###########################')
-        result[pid] = url[0] if isinstance(url, tuple) else url
+    # for pid in pids:
+    #     url = content.get_page_url_by_id(pid)
+    #     # print('###########################')
+    #     # print( pid )
+    #     # print( url[0] if isinstance(url, tuple) else url )
+    #     # print('###########################')
+    #     result[pid] = url[0] if isinstance(url, tuple) else url
     
     # print('###########################')
     # print( result )
@@ -131,7 +131,8 @@ class LdaModelingServer(Resource):
         result = {}
         if 'query' in json_data:
             FILES = {'DICT': DICT_BACKUP, 'CORPUS': CORPUS_BACKUP}
-            should_rebuild = os.stat(LDA_BACKUP).st_size == 0
+            # should_rebuild = os.stat(LDA_BACKUP).st_size == 0
+            should_rebuild = not utils.try_to_open_file(LDA_BACKUP)
             content = load_content()
             
             # Query the Model

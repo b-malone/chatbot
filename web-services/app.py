@@ -59,6 +59,8 @@ app = Flask(__name__,static_url_path='')
 api = Api(app)
 
 #
+# python -m flask run
+#
 # curl --header "Content Type: application/json" --request POST --data '{"query" :""}' URL
 #
 
@@ -75,6 +77,7 @@ api.add_resource(LsiModelingServer, '/topics/lsi')
 
 # Disable Caching (Development)
 app.config["CACHE_TYPE"] = "null"
+app.config["TEMPLATES_AUTO_RELOAD"] = True  # Watch files and restart on changes
 
 # DEBUG
 @app.route('/')
