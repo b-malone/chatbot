@@ -280,16 +280,9 @@ def get_unique_matrix_sim_values(sims, content, page_ids):
 
 
     while result > 0:
-        # page_id = page_ids[sims[index][0]]
-        # print('index = {}'.format(index))
-        # print('sims[index] = {}'.format(sims[index]))
-        # sims[index] = (2238, 0.70462626)
         page_ids_index = sims[index][0]
-        # print('page_ids_index = {}'.format(page_ids_index))
-        # print('TYPE page_ids = {}'.format(type(page_ids)))
         page_id = page_ids[page_ids_index][0]
-        # print('page_id = {}'.format(page_id))
-        # print('type of page_id = {}'.format(type(page_id)))
+     
         if [page_id] not in pids:
             pids.append(page_id)
             # print('Page ID: {}'.format(page_id))

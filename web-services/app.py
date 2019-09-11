@@ -26,11 +26,6 @@ logging.setLoggerClass(ColoredLogger)
 parser = OptionParser()
 parser.add_option('-m', '--model', nargs='?', type=str, default='lda', help='Select the Model to use for Topic Modeling (LDA, LSI, NMF)')
 parser.add_option('-r', '--rebuild', nargs='?', default=False, help='Force rebuild of model')
-# parser.add_option("-f", "--file", dest="filename",
-#                   help="write report to FILE", metavar="FILE")
-# parser.add_option("-q", "--quiet",
-#                   action="store_false", dest="verbose", default=True,
-#                   help="don't print status messages to stdout")
 
 (options, args) = parser.parse_args()
 # parser = argparse.ArgumentParser(description='')

@@ -94,11 +94,11 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     # model = build_predictive_model(dictionary, corpus)
     q_vec = model[bow]    # "query vector"
 
-    print('###########################')
-    print( q_vec )
-    print('###########################')
+    # Topic ID for "Max Coherence/Confidence Value"
+    # print( max(q_vec, key=lambda item: item[1])[0] )
+    # print('###########################')
     
-    topic_details = model.print_topic(max(q_vec, key=lambda item: item[1])[0])
+    topic_details = model.print_topic( max(q_vec, key=lambda item: item[1])[0] )
 
     # ### Get Similarity of Query Vector to Document Vectors
     # "sims" ~ histpgram of topics? (1.0 ~ PRESENT, 0.0 ~ NOT PRESENT ?)
@@ -108,52 +108,28 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     # ###
     # RECCOMMEND/TOPICS RESULT:
     # ### Get Related Pages
-    hashes = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
-    # return pids 
+    pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
 
 
-    # ===================================
-    # EXPERIMENTAL
-    # ===================================
     print('###########################')
-    # TOPIC DETAILS
-    # 0.168*"schedule" + 
-    # 0.075*"Scheduling" + 0.038*"search" + 0.038*"like" + 
-    # 0.038*"occurrence" + 0.038*"show" + 0.038*"creating" + 
-    # 0.038*"The" + 0.038*"Creating" + 0.038*"wizard"
+    print( topic_details )
+    print('###########################')
 
-    top_three_topics = utils.get_top_topics(3, topic_details)
-    top_three_topic_details = top_three_topics.items()
-    # !!!!!!
-    # top_three_topics -> NEW "sims" values????
-    # !!!!!!
-    # * Re-Run model.print_topic( .... ) >>> Pass to get_similarity... ???
-
-    print('###########################')
-    # print( topic_details )
-    print( top_three_topic_details )
-    print('###########################')
-    # print( hashes )
-    # print('###########################')
-    print( sims )
-    print('###########################')
-    # ===================================
-    
     result = {}
-    # for page in pids:
-    #     # url = content.get_page_url_by_id(pid)
-    #     # h = content.get
-    #     # print('###########################')
-    #     # print( url[0] if isinstance(url, tuple) else url )
-    #     # print('###########################')
-    #     result[pid] = url[0] if isinstance(url, tuple) else url
+    for pid in pids:
+        print( 'pid={}'.format(pid) )
+        url = content.get_page_url_by_id(pid)
+        result[pid] = url[0] if isinstance(url, tuple) else url
     
     # print('###########################')
     # print( result )
     # print('###########################')
     return result
 
-
+#
+# To Do:
+#   Enable passing POST data {'model': MODEL_NAME} to change model used
+#
 class LdaModelingServer(Resource):
     def post(self):
         model_config['MODEL_NAME'] = 'lda'
