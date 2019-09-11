@@ -8,26 +8,27 @@ from gensim import corpora
 import help_content
 # from help_content import HelpContent as content
 import utils
+import config as cfg
 
-# ### Data Stores and backups
-DATABASE_FILE = 'data/help.db'
-LDA_BACKUP    = 'data/lda_model'
-LSI_BACKUP    = 'data/lsi_model'
-DICT_BACKUP   = 'data/dictionary'
-CORPUS_BACKUP = 'data/corpus'
+# # ### Data Stores and backups
+# DATABASE_FILE = 'data/help.db'
+# LDA_BACKUP    = 'data/lda_model'
+# LSI_BACKUP    = 'data/lsi_model'
+# DICT_BACKUP   = 'data/dictionary'
+# CORPUS_BACKUP = 'data/corpus.mm'
 
-# Model Configuration 
-NUM_PASSES=10
-NUM_TOPICS=100
-RANDOM_STATE=1
-MODEL_NAME='lda'
+# # Model Configuration 
+# NUM_PASSES=10
+# NUM_TOPICS=100
+# RANDOM_STATE=1
+# MODEL_NAME='lda'
 
-# Configuration for modeling
-model_config = {}
-model_config['RANDOM_STATE'] = RANDOM_STATE if utils.variable_is_defined(RANDOM_STATE) else 1
-model_config['NUM_TOPICS'] = NUM_TOPICS if utils.variable_is_defined(NUM_TOPICS) else 100
-model_config['PASSES'] = NUM_PASSES if utils.variable_is_defined(NUM_PASSES) else 10
-model_config['MODEL_NAME'] = MODEL_NAME if utils.variable_is_defined(MODEL_NAME) else 'lda'
+# # Configuration for modeling
+# model_config = {}
+# model_config['RANDOM_STATE'] = RANDOM_STATE if utils.variable_is_defined(RANDOM_STATE) else 1
+# model_config['NUM_TOPICS'] = NUM_TOPICS if utils.variable_is_defined(NUM_TOPICS) else 100
+# model_config['PASSES'] = NUM_PASSES if utils.variable_is_defined(NUM_PASSES) else 10
+# model_config['MODEL_NAME'] = MODEL_NAME if utils.variable_is_defined(MODEL_NAME) else 'lda'
 
 
 def load_content():
@@ -95,8 +96,11 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     q_vec = model[bow]    # "query vector"
 
     # Topic ID for "Max Coherence/Confidence Value"
-    # print( max(q_vec, key=lambda item: item[1])[0] )
-    # print('###########################')
+    print('###########################')
+    print( q_vec )
+    print('###########################')
+    print( max(q_vec, key=lambda item: item[1]) )
+    print('###########################')
     
     topic_details = model.print_topic( max(q_vec, key=lambda item: item[1])[0] )
 
@@ -132,13 +136,13 @@ def query_model(model_name, content, should_rebuild, FILES, query):
 #
 class LdaModelingServer(Resource):
     def post(self):
-        model_config['MODEL_NAME'] = 'lda'
+        cfg.MODEL_NAME = 'lda'
         json_data = request.get_json(force=True)
         result = {}
         if 'query' in json_data:
-            FILES = {'DICT': DICT_BACKUP, 'CORPUS': CORPUS_BACKUP}
+            FILES = {'DICT': cfg.DICT_BACKUP, 'CORPUS': cfg.CORPUS_BACKUP}
             # should_rebuild = os.stat(LDA_BACKUP).st_size == 0
-            should_rebuild = not utils.try_to_open_file(LDA_BACKUP)
+            should_rebuild = not utils.try_to_open_file(cfg.LDA_BACKUP)
             content = load_content()
             
             # Query the Model
@@ -150,12 +154,12 @@ class LdaModelingServer(Resource):
 
 class LsiModelingServer(Resource):
     def post(self):
-        model_config['MODEL_NAME'] = 'lsi'
+        cfg.MODEL_NAME = 'lsi'
         json_data = request.get_json(force=True)
         result = {}
         if 'query' in json_data:
-            FILES = {'DICT': DICT_BACKUP, 'CORPUS': CORPUS_BACKUP}
-            should_rebuild = os.stat(LSI_BACKUP).st_size == 0
+            FILES = {'DICT': cfg.DICT_BACKUP, 'CORPUS': cfg.CORPUS_BACKUP}
+            should_rebuild = os.stat(cfg.LSI_BACKUP).st_size == 0
             content = load_content()
 
             # Query the Model

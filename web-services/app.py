@@ -21,33 +21,6 @@ from topics_service import LdaModelingServer, LsiModelingServer
 # logging.basicConfig(format='%(asctime)s : %(levelnam)s : %(message)s', level=logging.INFO)
 logging.setLoggerClass(ColoredLogger)
 
-# ARGS
-# ### --rebuild (force rebuild of model)
-parser = OptionParser()
-parser.add_option('-m', '--model', nargs='?', type=str, default='lda', help='Select the Model to use for Topic Modeling (LDA, LSI, NMF)')
-parser.add_option('-r', '--rebuild', nargs='?', default=False, help='Force rebuild of model')
-
-(options, args) = parser.parse_args()
-# parser = argparse.ArgumentParser(description='')
-# parser.add_argument('--model', nargs='?', type=str, default='lda', help='Select the Model to use for Topic Modeling (LDA, LSI, NMF)')
-# parser.add_argument('--rebuild', nargs='?', type=bool, default=False, help='Force rebuild of model')
-# args, unknown = parser.parse_args()
-### ARGS PARSING
-if options.rebuild is None:
-    options.rebuild = False 
-else:
-    options.rebuild = False 
-
-should_rebuild = options.rebuild
-MODEL_NAME = options.model
-print('MODEL_NAME: {}'.format(MODEL_NAME))
-print( type(MODEL_NAME) )
-print('SHOULD_REBUILD: {}'.format(should_rebuild))
-print( type(should_rebuild) )
-
-# g.should_rebuild = should_rebuild
-# g.MODEL_NAME = MODEL_NAME
-
 # Serve && Run (Queries)!
 PORT = 5000
 app = Flask(__name__,static_url_path='')
@@ -59,7 +32,8 @@ api = Api(app)
 #   FLASK_DEBUG=1 => livereload
 #
 # curl --header "Content Type: application/json" --request POST --data '{"query" :""}' URL
-#
+# curl --header "Content-Type: application/json" --request POST --data '{"query": "how do I schedule an event?"}' http://localhost:5000/topics/lda
+# curl --header "Content-Type: application/json" --request POST --data '{"query": "is this website accessible??"}' http://localhost:5000/topics/lda
 
 # @app.route("/topics/lda", methods=['POST'])
 # def lda():

@@ -1,19 +1,28 @@
-import os
-import string
-import pickle
-import json
+import os, sys, string, json
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
 from gensim import similarities, corpora, models
+# from gensim.test.utils import datapath
 # from flask import g # "ENV vars" for flask apps
+import config as cfg
 
 lemma = WordNetLemmatizer()
 punctuation = set(string.punctuation)
 stop_words = set(stopwords.words('english'))
 
 
+def print_exception_details(what, exc):
+    print('Error: {}'.format(what))
+    print(exc)
+
 def variable_is_defined(var):
     return 'var' in vars() or 'var' in globals()
+
+def debug_print(what, data):
+    print("###################")
+    print( what )
+    print( data )
+    print("###################")
 
 def get_similarity(lda, corpus, q_vec):
     """
@@ -66,37 +75,27 @@ def try_to_open_file(path):
         return False
     # return file_exists
 
-# def serialize_json(PATH, data):
-#     with open(PATH+'.json', 'w', encoding='utf-8') as f:
-#         json.dump(data, f, ensure_ascii=False, indent=4)
+# def get_top_topics(limit, topic_details):
+#     """
+#     Sorts and filters the topic_details from the model to the top (limit)
+#     topic details.
+#     """
+#     topic_details_as_string = str('{}'.format(topic_details))
+#     topic_dict = dict()
+#     # FIND MAX (3) CONFIDENCE VALUES.
+#     # FILL top_three_topics ONLY WITH THE TOPICS 
+#     # THAT HAVE THE (3) HIGHEST CONFIDENCE VALUES.
 
-# def load_json_file(PATH):
-#     json_data = {}
-#     with open(PATH+'.json', 'r') as f:
-#         json_data = json.load(f)
-#     return json_data
+#     # Destructure topic details into a map of confidence-to-TopicDetails
+#     for topic_rating in topic_details_as_string.split('+'):
+#         confidence = float(topic_rating.split('*')[0])
+#         topic = topic_rating.split('*')[1]
+#         topic_dict[confidence] = topic_rating
 
-def get_top_topics(limit, topic_details):
-    """
-    Sorts and filters the topic_details from the model to the top (limit)
-    topic details.
-    """
-    topic_details_as_string = str('{}'.format(topic_details))
-    topic_dict = dict()
-    # FIND MAX (3) CONFIDENCE VALUES.
-    # FILL top_three_topics ONLY WITH THE TOPICS 
-    # THAT HAVE THE (3) HIGHEST CONFIDENCE VALUES.
-
-    # Destructure topic details into a map of confidence-to-TopicDetails
-    for topic_rating in topic_details_as_string.split('+'):
-        confidence = float(topic_rating.split('*')[0])
-        topic = topic_rating.split('*')[1]
-        topic_dict[confidence] = topic_rating
-
-    # Sort topic_dict dict BY key (confidence)
-    # Now, top_three_topics = first three topic_ratings
-    results = list(sorted(topic_dict.items()))[0:limit]
-    return dict(results)
+#     # Sort topic_dict dict BY key (confidence)
+#     # Now, top_three_topics = first three topic_ratings
+#     results = list(sorted(topic_dict.items()))[0:limit]
+    # return dict(results)
 
 def get_cleaned_text(text):
     text = text.replace('\n', '')
@@ -127,8 +126,8 @@ def build_dictionary(content, should_rebuild, DICT_BACKUP):
             # load dict from disk
             dictionary = corpora.dictionary.Dictionary.load(DICT_FILE)
             print('Dictionary Size = {}'.format(len(dictionary)))
-        except:
-            print('ERROR Building Dictionary!')
+        except Exception as exc:
+           print_exception_details('Building Dictionary', exc)
     else:
         print('Building Dictionary...')
         dictionary = corpora.Dictionary(content)    # list: (word_id, appearance count)
@@ -147,28 +146,20 @@ def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
         * Store Corpus (A List) via Pickle
     """
     corpus = []
-    CORPUS_FILE = get_file_path(CORPUS_BACKUP)
-    print('CORPUS_FILE = {}'.format(CORPUS_FILE))
-
-    # DEBUG
-    should_rebuild = True
+    corpus_file = get_file_path(CORPUS_BACKUP)
 
     if not should_rebuild:
         try:
-            print('Loading Corpus File.')
-            # corpus = pickle.load( open( corpus_file, "rb" ) )
+            print('Loading Corpus File...')
             corpus = corpora.MmCorpus(corpus_file)
-            print('Corpus Size = {}'.format(len(corpus)))
-        except:
-            print('ERROR Building Corpus!')
+        except Exception as exc:
+            print_exception_details('Building Corpus', exc)
+
     else:
         print('Building Corpus...')
         corpus = [dictionary.doc2bow(text) for text in content] # doc-to-bag_of_words
         # SAVE the construction
-        # corpus.save(CORPUS_FILE)  # save corpus to disk
-        # pickle_save(CORPUS_FILE, corpus) # save corpus to disk
-        corpora.MmCorpus.serialize(CORPUS_FILE, corpus) # save corpus to disk
-        print('Corpus Size = {}'.format(len(corpus)))
+        corpora.MmCorpus.serialize(corpus_file, corpus) # save corpus to disk
 
     return corpus
 
@@ -178,55 +169,43 @@ def model_switch_dict():
         'lsi': build_lsi_model
     }
 
-def build_model(dictionary, corpus, config, should_rebuild, BACKUP_FILE):
-    # try:
-    model_build_fn = model_switch_dict()[config['MODEL_NAME']]
+# def build_model(dictionary, corpus, config, should_rebuild, BACKUP_FILE):
+def build_model(dictionary, corpus, should_rebuild):
+    try:
+        model_build_fn = model_switch_dict()[cfg.MODEL_NAME]
 
-    return model_build_fn(dictionary, corpus, config, should_rebuild, BACKUP_FILE)
-    # except:
-    #     print('Unrecognized Model Name!')
-    #     return {}
+        return model_build_fn(dictionary, corpus, should_rebuild)
+    except Exception as exc:
+        print_exception_details('Building Model', exc)
 
 
-def build_lda_model(dictionary, corpus, config, should_rebuild, LDA_BACKUP):
+def build_lda_model(dictionary, corpus, should_rebuild):
     lda = []
 
     # DEBUG
-    should_rebuild = True
+    # should_rebuild = True
+
+    # debug_print('datapath:LDA', datapath(cfg.LDA_BACKUP))
 
     if not should_rebuild:
         try:
-            LDA = get_file_path(LDA_BACKUP)
-            print('LDA_FILE = {}'.format(LDA))
+            print('Loading LDA Model backup...')
+            lda_file = get_file_path(cfg.LDA_BACKUP)
+            print('LDA file = {}'.format(lda_file))
 
-            if os.stat(LDA).st_size != 0:
-                # print('LDA_FILE = {}'.format(LDA))
-                with open(LDA, "a") as lda_file:
-                    if lda_file:
-                        print('Loading LDA File.')
-                        lda = models.LdaModel.load(lda_file)
-            else:
-                print('Building LDA Model...')
-                lda = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
-                print('Done!')
-                # Save Model Structures
-                LDA_FILE = get_file_path(LDA_BACKUP)
-                lda.save(LDA_FILE)
-        except:
-            print(' *** Error Loadind LDA Model!')
-            print('Building LDA Model...')
-            lda = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
-            print('Done!')
-            # Save Model Structures
-            LDA_FILE = get_file_path(LDA_BACKUP)
-            lda.save(LDA_FILE)
+            # with open(LDA, "a") as lda_file:
+                # if lda_file:
+            lda = models.LdaModel.load(lda_file)
+
+        except Exception as exc:
+           print_exception_details('Building LDA Model', exc)
 
     else:
         print('Building LDA Model...')
-        lda = models.LdaModel(corpus, id2word=dictionary, random_state=config['RANDOM_STATE'], num_topics=config['NUM_TOPICS'], passes=config['PASSES'])
+        lda = models.LdaModel(corpus, id2word=dictionary, random_state=cfg.RANDOM_STATE, num_topics=cfg.NUM_TOPICS, passes=cfg.NUM_PASSES)
         print('Done!')
         # Save Model Structures
-        LDA_FILE = get_file_path(LDA_BACKUP)
+        LDA_FILE = get_file_path(cfg.LDA_BACKUP)
         lda.save(LDA_FILE)
 
     return lda
