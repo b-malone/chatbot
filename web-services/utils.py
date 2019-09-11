@@ -9,7 +9,7 @@ from gensim import similarities, corpora, models
 
 lemma = WordNetLemmatizer()
 punctuation = set(string.punctuation)
-stoplist = set(stopwords.words('english'))
+stop_words = set(stopwords.words('english'))
 
 
 def variable_is_defined(var):
@@ -37,7 +37,7 @@ def remove_numbers(text):
     return ''.join(char for char in text if not char.isdigit())
 
 def remove_stop_words(text):
-    return ' '.join([word for word in text.split() if word not in stoplist])
+    return ' '.join([word for word in text.split() if word not in stop_words])
 
 def remove_single_characters(text):
     return ' '.join([word for word in text.split() if len(word) > 1])
@@ -75,6 +75,28 @@ def try_to_open_file(path):
 #     with open(PATH+'.json', 'r') as f:
 #         json_data = json.load(f)
 #     return json_data
+
+def get_top_topics(limit, topic_details):
+    """
+    Sorts and filters the topic_details from the model to the top (limit)
+    topic details.
+    """
+    topic_details_as_string = str('{}'.format(topic_details))
+    topic_dict = dict()
+    # FIND MAX (3) CONFIDENCE VALUES.
+    # FILL top_three_topics ONLY WITH THE TOPICS 
+    # THAT HAVE THE (3) HIGHEST CONFIDENCE VALUES.
+
+    # Destructure topic details into a map of confidence-to-TopicDetails
+    for topic_rating in topic_details_as_string.split('+'):
+        confidence = float(topic_rating.split('*')[0])
+        topic = topic_rating.split('*')[1]
+        topic_dict[confidence] = topic_rating
+
+    # Sort topic_dict dict BY key (confidence)
+    # Now, top_three_topics = first three topic_ratings
+    results = list(sorted(topic_dict.items()))[0:limit]
+    return dict(results)
 
 def get_cleaned_text(text):
     text = text.replace('\n', '')
@@ -128,10 +150,14 @@ def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
     CORPUS_FILE = get_file_path(CORPUS_BACKUP)
     print('CORPUS_FILE = {}'.format(CORPUS_FILE))
 
+    # DEBUG
+    should_rebuild = True
+
     if not should_rebuild:
         try:
             print('Loading Corpus File.')
-            corpus = pickle.load( open( corpus_file, "rb" ) )
+            # corpus = pickle.load( open( corpus_file, "rb" ) )
+            corpus = corpora.MmCorpus(corpus_file)
             print('Corpus Size = {}'.format(len(corpus)))
         except:
             print('ERROR Building Corpus!')
@@ -140,7 +166,8 @@ def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
         corpus = [dictionary.doc2bow(text) for text in content] # doc-to-bag_of_words
         # SAVE the construction
         # corpus.save(CORPUS_FILE)  # save corpus to disk
-        pickle_save(CORPUS_FILE, corpus) # save corpus to disk
+        # pickle_save(CORPUS_FILE, corpus) # save corpus to disk
+        corpora.MmCorpus.serialize(CORPUS_FILE, corpus) # save corpus to disk
         print('Corpus Size = {}'.format(len(corpus)))
 
     return corpus
@@ -163,6 +190,10 @@ def build_model(dictionary, corpus, config, should_rebuild, BACKUP_FILE):
 
 def build_lda_model(dictionary, corpus, config, should_rebuild, LDA_BACKUP):
     lda = []
+
+    # DEBUG
+    should_rebuild = True
+
     if not should_rebuild:
         try:
             LDA = get_file_path(LDA_BACKUP)
@@ -244,9 +275,9 @@ def get_unique_matrix_sim_values(sims, content, page_ids):
     index = 0
     result = 10
 
-    # index = 0
-    # sims[index] = (2238, 0.70462626)
-    # page_ids_index = 2238
+    # REFINEMENT: Possible to get "top 3-5" recommendations for pages
+    #   based on "confidence" of passed in topic_details?
+
 
     while result > 0:
         # page_id = page_ids[sims[index][0]]

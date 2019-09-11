@@ -42,7 +42,7 @@ def build_dictionary(content):
     # BUG: Saved Dictionaries are not of Type Dictionary!
     should_rebuild = not utils.try_to_open_file(DICT_BACKUP)
     # should_rebuild = True
-    print('Should Rebuild Dictionary = {}'.format(should_rebuild))
+    # print('Should Rebuild Dictionary = {}'.format(should_rebuild))
 
     return utils.build_dictionary(content, should_rebuild, DICT_BACKUP)
 
@@ -51,7 +51,7 @@ def build_corpus(dictionary, content):
     # BUG: Saved Corpuses are not of Type Corpus!
     should_rebuild = not utils.try_to_open_file(CORPUS_BACKUP)
     # should_rebuild = True
-    print('Should Rebuild Corpus = {}'.format(should_rebuild))
+    # print('Should Rebuild Corpus = {}'.format(should_rebuild))
     return utils.build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP)
     # print('Corpus Size: {}'.format( len(corpus) ))
 
@@ -61,9 +61,9 @@ def build_predictive_model(model_name, dictionary, corpus):
     # BUG: Saved Models are not of Type Model!
     should_rebuild = not utils.try_to_open_file(BACKUP_FILE)
 
-    print('###########################')
-    print('Model_Name = {}'.format(model_name))
-    print('###########################')
+    # print('###########################')
+    # print('Model_Name = {}'.format(model_name))
+    # print('###########################')
 
     print('Should Rebuild Model = {}'.format(should_rebuild))
 
@@ -84,36 +84,66 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     corpus = build_corpus(dictionary, content)
 
     # bow = corpora.Dictionary().doc2bow(utils.get_cleaned_text( query ).split())
-    bow = dictionary.doc2bow(utils.get_cleaned_text( query ).split())
+    bow = dictionary.doc2bow(utils.get_cleaned_text( query.lower() ).split())
     # bag_of_words = [word for word in bow]
 
-    # model = build_predictive_model(model_name, dictionary, corpus)
+    model = build_predictive_model(model_name, dictionary, corpus)
 
-    # # MODEL
-    # # BACKUP_FILE = switch_model_backup_file(model_name)
-    # # model = build_predictive_model(dictionary, corpus)
-    # q_vec = model[bow]    # "query vector"
-    # topic_details = model.print_topic(max(q_vec, key=lambda item: item[1])[0])
+    # MODEL
+    # BACKUP_FILE = switch_model_backup_file(model_name)
+    # model = build_predictive_model(dictionary, corpus)
+    q_vec = model[bow]    # "query vector"
 
-    # # ### Get Similarity of Query Vector to Document Vectors
-    # sims = utils.get_similarity(model, corpus, q_vec)
-    # # Sort High-to-Low by similarity
-    # sims = sorted(enumerate(sims), key=lambda item: -item[1])
-    # # ###
-    # # RECCOMMEND/TOPICS RESULT:
-    # # ### Get Related Pages
-    # pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
-    # # return pids 
+    print('###########################')
+    print( q_vec )
+    print('###########################')
+    
+    topic_details = model.print_topic(max(q_vec, key=lambda item: item[1])[0])
 
-    # print('###########################')
+    # ### Get Similarity of Query Vector to Document Vectors
+    # "sims" ~ histpgram of topics? (1.0 ~ PRESENT, 0.0 ~ NOT PRESENT ?)
+    sims = utils.get_similarity(model, corpus, q_vec)
+    # Sort High-to-Low by similarity
+    sims = sorted(enumerate(sims), key=lambda item: -item[1])
+    # ###
+    # RECCOMMEND/TOPICS RESULT:
+    # ### Get Related Pages
+    hashes = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
+    # return pids 
+
+
+    # ===================================
+    # EXPERIMENTAL
+    # ===================================
+    print('###########################')
+    # TOPIC DETAILS
+    # 0.168*"schedule" + 
+    # 0.075*"Scheduling" + 0.038*"search" + 0.038*"like" + 
+    # 0.038*"occurrence" + 0.038*"show" + 0.038*"creating" + 
+    # 0.038*"The" + 0.038*"Creating" + 0.038*"wizard"
+
+    top_three_topics = utils.get_top_topics(3, topic_details)
+    top_three_topic_details = top_three_topics.items()
+    # !!!!!!
+    # top_three_topics -> NEW "sims" values????
+    # !!!!!!
+    # * Re-Run model.print_topic( .... ) >>> Pass to get_similarity... ???
+
+    print('###########################')
     # print( topic_details )
+    print( top_three_topic_details )
+    print('###########################')
+    # print( hashes )
     # print('###########################')
-
+    print( sims )
+    print('###########################')
+    # ===================================
+    
     result = {}
-    # for pid in pids:
-    #     url = content.get_page_url_by_id(pid)
+    # for page in pids:
+    #     # url = content.get_page_url_by_id(pid)
+    #     # h = content.get
     #     # print('###########################')
-    #     # print( pid )
     #     # print( url[0] if isinstance(url, tuple) else url )
     #     # print('###########################')
     #     result[pid] = url[0] if isinstance(url, tuple) else url

@@ -387,7 +387,12 @@ class HelpSpider(scrapy.Spider):
         # logger.warning( list(response.data.keys()) )
 
         # Store scraped (JSON) data to SQLite DB
-        self.save_page_content(response.data['title'], response.data['hash'], response.data['url'], response.data['content'])
+        self.save_page_content(
+            str(response.data['title']).lower(), 
+            str(response.data['hash']).lower(), 
+            str(response.data['url']).lower(), 
+            str(response.data['content']).lower()
+        )
 
         logger.warning("####################")
 

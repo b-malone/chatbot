@@ -35,6 +35,12 @@ class HelpContent:
 
     def get_page_hashes(self):
         return [h for h in self.cursor.execute('SELECT hash FROM help_content').fetchall()]
+        
+    def get_page_ids(self):
+        """
+        URL Hashes are "Page_Ids" for Help Content pages.
+        """ 
+        return [pid for pid in self.cursor.execute('SELECT hash FROM help_content').fetchall()]
 
     def get_page_by_hash(self, hashKey):
         return str(self.cursor.execute('SELECT content FROM help_content WHERE hash=?', [hashKey]).fetchone())

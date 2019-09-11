@@ -60,6 +60,8 @@ api = Api(app)
 
 #
 # python -m flask run
+#   FLASK_APP=main.py FLASK_DEBUG=1 python -m flask run
+#   FLASK_DEBUG=1 => livereload
 #
 # curl --header "Content Type: application/json" --request POST --data '{"query" :""}' URL
 #
