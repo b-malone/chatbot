@@ -1,28 +1,57 @@
 {
-  "name": "chatbot-client",
-  "version": "1.0.0",
-  "description": "AngularJS socket.io client for a Python service based chatbot. ChatBot purpose is customer support and reccommendations.",
-  "main": "app.js",
-  "scripts": {
-    "test": "npm run test"
-  },
-  "keywords": [
-    "chatbot",
-    "python3",
-    "nlp",
-    "chatbot",
-    "socket-io",
-    "client"
-  ],
+  "name": "angularjs-webpack-chatbot-client",
+  "description": "angularjs 1.x build with webpack for chatbot",
+  "version": "1.0.1",
   "author": "Bailey Malone",
   "license": "MIT",
+  "keywords": [
+    "ES6",
+    "webpack",
+    "angularjs",
+    "component",
+    "webpack",
+    "client",
+    "college-net"
+  ],
+  "scripts": {
+    "build": "cross-env NODE_ENV=production webpack -p",
+    "build:prod": "npm run build",
+    "start": "cross-env NODE_ENV=development webpack-dev-server"
+  },
   "dependencies": {
-    "angular": "^1.7.8",
-    "bootstrap-sass": "^3.4.1",
-    "jquery": "^3.4.1",
-    "socket.io": "^2.2.0"
+    "@babel/runtime": "^7.0.0",
+    "@babel/runtime-corejs2": "^7.0.0",
+    "@uirouter/angularjs": "^1.0.20",
+    "angular": "^1.7.3",
+    "angular-loading-bar": "^0.9.0",
+    "webpack-cli": "^3.1.0"
   },
   "devDependencies": {
-    "gulp": "^4.0.2"
+    "@babel/core": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "autoprefixer": "^9.1.5",
+    "babel-loader": "^8.0.2",
+    "babel-plugin-angularjs-annotate": "^0.9.0",
+    "babel-plugin-lodash": "^3.3.4",
+    "copy-webpack-plugin": "^4.5.2",
+    "cross-env": "^5.2.0",
+    "css-loader": "^1.0.0",
+    "eslint": "^4.17.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.7.0",
+    "extract-text-webpack-plugin": "^3.0.2",
+    "html-loader": "^0.5.5",
+    "html-webpack-plugin": "^3.2.0",
+    "node-libs-browser": "2.1.0",
+    "node-sass": "^4.9.3",
+    "null-loader": "^0.1.1",
+    "postcss-loader": "3.0.0",
+    "raw-loader": "^0.5.1",
+    "sass-loader": "^7.1.0",
+    "style-loader": "^0.23.0",
+    "uglifyjs-webpack-plugin": "^2.0.1",
+    "webpack": "^4.17.2",
+    "webpack-dev-server": "^3.1.8"
   }
 }
