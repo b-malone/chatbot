@@ -1,19 +1,45 @@
 version: '3.2'
 
 services:
-  web:
-    build:
+  # web:
+  #   build:
+  #     context: ./web-services
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5000:5000"
+  #   # links:
+  #   #   - db
+  #   volumes:
+  #     - ./web-services:/app
+  #     # - type: bind
+  #     #   source: ./web-services
+  #     #   target: /app
+
+  flask:
+    build: 
       context: ./web-services
       dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
-    # links:
-    #   - db
+    # image: flask_web_services:flask_web_services
     volumes:
       - ./web-services:/app
-      # - type: bind
-      #   source: ./web-services
-      #   target: /app
+    environment:
+      - FLASK_APP=/app/app.py
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+    restart: always
 
-  # db:
-  #   build: ./db
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    restart: always
+
+  # networks:
+  #   web:
+
+  # volumes:
+  #   app:
