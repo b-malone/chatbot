@@ -13,9 +13,3 @@ NUM_TOPICS=100
 RANDOM_STATE=1
 MODEL_NAME='lda'
 
-# # Configuration for modeling
-# model_config = {}
-# model_config['RANDOM_STATE'] = RANDOM_STATE
-# model_config['NUM_TOPICS'] = NUM_TOPICS
-# model_config['PASSES'] = NUM_PASSES
-# model_config['MODEL_NAME'] = MODEL_NAME

@@ -10,55 +10,36 @@ import help_content
 import utils
 import config as cfg
 
-# # ### Data Stores and backups
-# DATABASE_FILE = 'data/help.db'
-# LDA_BACKUP    = 'data/lda_model'
-# LSI_BACKUP    = 'data/lsi_model'
-# DICT_BACKUP   = 'data/dictionary'
-# CORPUS_BACKUP = 'data/corpus.mm'
-
-# # Model Configuration 
-# NUM_PASSES=10
-# NUM_TOPICS=100
-# RANDOM_STATE=1
-# MODEL_NAME='lda'
-
-# # Configuration for modeling
-# model_config = {}
-# model_config['RANDOM_STATE'] = RANDOM_STATE if utils.variable_is_defined(RANDOM_STATE) else 1
-# model_config['NUM_TOPICS'] = NUM_TOPICS if utils.variable_is_defined(NUM_TOPICS) else 100
-# model_config['PASSES'] = NUM_PASSES if utils.variable_is_defined(NUM_PASSES) else 10
-# model_config['MODEL_NAME'] = MODEL_NAME if utils.variable_is_defined(MODEL_NAME) else 'lda'
 
 
 def load_content():
     # Access DataBase content, 
     # build content (Object) for modeling and analysis
-    DATABASE = utils.get_file_path(DATABASE_FILE)
+    DATABASE = utils.get_file_path(cfg.DATABASE_FILE)
     return help_content.HelpContent(DATABASE)
     # return content(DATABASE)
 
 def build_dictionary(content):
     # Create a Dictionary
     # BUG: Saved Dictionaries are not of Type Dictionary!
-    should_rebuild = not utils.try_to_open_file(DICT_BACKUP)
+    should_rebuild = not utils.try_to_open_file(cfg.DICT_BACKUP)
     # should_rebuild = True
     # print('Should Rebuild Dictionary = {}'.format(should_rebuild))
 
-    return utils.build_dictionary(content, should_rebuild, DICT_BACKUP)
+    return utils.build_dictionary(content, should_rebuild, cfg.DICT_BACKUP)
 
 def build_corpus(dictionary, content):
     # Create a Corpus
     # BUG: Saved Corpuses are not of Type Corpus!
-    should_rebuild = not utils.try_to_open_file(CORPUS_BACKUP)
+    should_rebuild = not utils.try_to_open_file(cfg.CORPUS_BACKUP)
     # should_rebuild = True
     # print('Should Rebuild Corpus = {}'.format(should_rebuild))
-    return utils.build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP)
+    return utils.build_corpus(dictionary, content, should_rebuild, cfg.CORPUS_BACKUP)
     # print('Corpus Size: {}'.format( len(corpus) ))
 
 def build_predictive_model(model_name, dictionary, corpus):
     # Build Model!
-    BACKUP_FILE = 'data/' + model_name.lower() + '_model'
+    BACKUP_FILE = 'data/' + model_name.lower() + '_model.model'
     # BUG: Saved Models are not of Type Model!
     should_rebuild = not utils.try_to_open_file(BACKUP_FILE)
 
@@ -69,11 +50,11 @@ def build_predictive_model(model_name, dictionary, corpus):
     print('Should Rebuild Model = {}'.format(should_rebuild))
 
     # print('building model {}...'.foramat(model_config['MODEL_NAME']))
-    model_config['MODEL_NAME'] = model_name
-    return utils.build_model(dictionary, corpus, model_config, should_rebuild, BACKUP_FILE)
+    cfg.MODEL_NAME = model_name
+    return utils.build_model(dictionary, corpus, should_rebuild)
 
 def switch_model_backup_file(model_name):
-    switcher = {'lda': LDA_BACKUP, 'lsi': LSI_BACKUP}
+    switcher = {'lda': cfg.LDA_BACKUP, 'lsi': cfg.LSI_BACKUP}
     return switcher.get(model_name)
 
 def query_model(model_name, content, should_rebuild, FILES, query):
