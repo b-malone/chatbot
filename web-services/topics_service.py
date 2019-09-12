@@ -82,6 +82,13 @@ def query_model(model_name, content, should_rebuild, FILES, query):
     print('###########################')
     print( max(q_vec, key=lambda item: item[1]) )
     print('###########################')
+
+    # ISSUES
+    #
+    #   * ValueError: max() arg is an empty sequence
+    #   ??? Does this mean topic model matching FAILED ?
+    #
+
     
     topic_details = model.print_topic( max(q_vec, key=lambda item: item[1])[0] )
 
@@ -140,7 +147,7 @@ class LsiModelingServer(Resource):
         result = {}
         if 'query' in json_data:
             FILES = {'DICT': cfg.DICT_BACKUP, 'CORPUS': cfg.CORPUS_BACKUP}
-            should_rebuild = os.stat(cfg.LSI_BACKUP).st_size == 0
+            should_rebuild = not utils.try_to_open_file(cfg.LSI_BACKUP)
             content = load_content()
 
             # Query the Model

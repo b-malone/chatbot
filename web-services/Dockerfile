@@ -15,25 +15,9 @@ RUN pip3 install -r requirements.txt
 # Init NLTK
 
 EXPOSE 5000
-# CMD gunicorn app:app -b0.0.0.0:5000
+
 RUN python init_nltk.py
-# CMD [ "start.py" ]
-CMD gunicorn app:app -b0.0.0.0:5000
 
-# FROM ubuntu:16.04
-
-# RUN apt-get update -y && \
-#     apt-get install -y python3-pip python-dev build-essential libssl-dev libffi-dev
-
-# # We copy just the requirements.txt first to leverage Docker cache
-# # COPY ./requirements.txt /app/requirements.txt
-# COPY . /app
-
-# WORKDIR /app
-
-# RUN pip3 install -r requirements.txt
-
-# # COPY . /app
-
-# ENTRYPOINT [ "python3" ]
-# CMD [ "app.py" ]
+CMD gunicorn app:app -b0.0.0.0:5000 
+# --capture-output --log-level debug
+# gunicorn --workers 3 --bind 127.0.0.1:5000 --error-logfile /app/error.log --access-logfile /app/access.log --capture-output --log-level debug

@@ -1,25 +1,11 @@
-version: '3.2'
+version: '3.4'
 
 services:
-  # web:
-  #   build:
-  #     context: ./web-services
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5000:5000"
-  #   # links:
-  #   #   - db
-  #   volumes:
-  #     - ./web-services:/app
-  #     # - type: bind
-  #     #   source: ./web-services
-  #     #   target: /app
-
   flask:
     build: 
       context: ./web-services
       dockerfile: Dockerfile
-    # image: flask_web_services:flask_web_services
+    container_name: flask
     volumes:
       - ./web-services:/app
     environment:
@@ -28,18 +14,25 @@ services:
       - "5000"
     ports:
       - "5000:5000"
+    networks:
+      web-service:
+        aliases:
+          - docker-flask
     restart: always
 
   nginx:
     image: nginx:alpine
+    container_name: nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
       - "80:80"
+    depends_on:
+      - flask
+    networks:
+      - web-service
     restart: always
 
-  # networks:
-  #   web:
-
-  # volumes:
-  #   app:
+networks:
+  web-service:
