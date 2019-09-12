@@ -35,13 +35,6 @@ api = Api(app)
 # curl --header "Content-Type: application/json" --request POST --data '{"query": "how do I schedule an event?"}' http://localhost:5000/topics/lda
 # curl --header "Content-Type: application/json" --request POST --data '{"query": "is this website accessible??"}' http://localhost:5000/topics/lda
 
-# @app.route("/topics/lda", methods=['POST'])
-# def lda():
-#     if request.method == 'POST':
-#         # note = str(request.data.get('text', ''))
-#         query = request.data.get('query', '')
-#         return lda_model_response(query)
-
 # api.add_resource(TopicModelingServer, '/topics')
 api.add_resource(LdaModelingServer, '/topics/lda')
 api.add_resource(LsiModelingServer, '/topics/lsi')
@@ -51,11 +44,12 @@ api.add_resource(TfidModelingServer, '/topics/tfid')
 app.config["CACHE_TYPE"] = "null"
 app.config["TEMPLATES_AUTO_RELOAD"] = True  # Watch files and restart on changes
 
-# DEBUG
-@app.route('/')
-def hello():
-    name = request.args.get("name", "World")
-    return f'Hello, {escape(name)}!'
+# @app.route("/topics/lda", methods=['POST'])
+# def lda():
+#     if request.method == 'POST':
+#         # note = str(request.data.get('text', ''))
+#         query = request.data.get('query', '')
+#         return lda_model_response(query)
 
 # Handle/Return Errors (Debugging)
 def handle_error(error):

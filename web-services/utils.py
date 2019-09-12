@@ -1,11 +1,7 @@
 import os, sys, string, json
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
-from gensim import similarities, corpora
-# from gensim import similarities, corpora, models
-# from gensim.models import TfidfModel, LdaModel, LsiModel
-# from gensim.test.utils import datapath
-# from flask import g # "ENV vars" for flask apps
+from gensim import similarities
 import modeling
 import config as cfg
 
@@ -23,15 +19,15 @@ def variable_is_defined(var):
 
 def debug_print(what, data):
     print("###################")
-    print( what )
+    print( what+' of type {}'.format(type(what)) )
     print( data )
     print("###################")
 
-def get_similarity(lda, corpus, q_vec):
+def get_similarity(model, corpus, q_vec):
     """
     Find related Documents.
     """
-    index = similarities.MatrixSimilarity(lda[corpus])
+    index = similarities.MatrixSimilarity(model[corpus])
     sims = index[q_vec]
     return sims
 
@@ -111,61 +107,6 @@ def get_cleaned_text(text):
     text = lemmatize(text)
     return text
 
-def build_dictionary(content, should_rebuild, DICT_BACKUP):
-    """
-       A  (Gensim) Dictionary is a map of unique words to unique IDs.
-
-       * Store Dictionary via corpora.dictionary.Dictionary.load/save
-    """
-    dictionary = []
-    DICT_FILE = get_file_path(DICT_BACKUP)
-    print('DICT_FILE = {}'.format(DICT_FILE))
-
-    if not should_rebuild:
-        try:
-            # with open(DICT, "rb") as dict_file:
-            #     if dict_file:
-            print('Loading Dictionary File.')
-            # load dict from disk
-            dictionary = corpora.dictionary.Dictionary.load(DICT_FILE)
-            print('Dictionary Size = {}'.format(len(dictionary)))
-        except Exception as exc:
-           print_exception_details('Building Dictionary', exc)
-    else:
-        print('Building Dictionary...')
-        dictionary = corpora.Dictionary(content)    # list: (word_id, appearance count)
-        dictionary.filter_extremes(no_below=5, no_above=0.4)
-        # SAVE the construction
-        corpora.dictionary.Dictionary.save(dictionary, DICT_FILE)  # save dict to disk
-        print('Dictionary Size = {}'.format(len(dictionary)))
-    
-    return dictionary
-
-def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
-    """
-        A (Gensim) Corpus is a "bag of words", which is a histogram map
-        for unique and relevant words in a document.
-
-        * Store Corpus (A List) via Pickle
-    """
-    corpus = []
-    corpus_file = get_file_path(CORPUS_BACKUP)
-
-    if not should_rebuild:
-        try:
-            print('Loading Corpus File...')
-            corpus = corpora.MmCorpus(corpus_file)
-        except Exception as exc:
-            print_exception_details('Building Corpus', exc)
-
-    else:
-        print('Building Corpus...')
-        corpus = [dictionary.doc2bow(text) for text in content] # doc-to-bag_of_words
-        # SAVE the construction
-        corpora.MmCorpus.serialize(corpus_file, corpus) # save corpus to disk
-
-    return corpus
-
 def model_switch_dict():
     return {
         'lda': modeling.build_lda_model,
@@ -183,7 +124,7 @@ def build_model(dictionary, corpus, should_rebuild):
         print_exception_details('Building Model', exc)
 
 
-def get_unique_matrix_sim_values(sims, content, page_ids):
+def get_unique_matrix_similarity_values(sims, content, page_ids):
     pids = []
     index = 0
     result = 10

@@ -10,7 +10,9 @@ CORPUS_BACKUP = 'data/corpus.mm'
 
 # Model Configuration 
 NUM_PASSES=10
-NUM_TOPICS=25
+NUM_TOPICS=15
 RANDOM_STATE=1
 MODEL_NAME='lda'
+
+DEBUG_ENABLED=True
 
