@@ -1,9 +1,12 @@
 import os, sys, string, json
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
-from gensim import similarities, corpora, models
+from gensim import similarities, corpora
+# from gensim import similarities, corpora, models
+# from gensim.models import TfidfModel, LdaModel, LsiModel
 # from gensim.test.utils import datapath
 # from flask import g # "ENV vars" for flask apps
+import modeling
 import config as cfg
 
 lemma = WordNetLemmatizer()
@@ -165,8 +168,9 @@ def build_corpus(dictionary, content, should_rebuild, CORPUS_BACKUP):
 
 def model_switch_dict():
     return {
-        'lda': build_lda_model,
-        'lsi': build_lsi_model
+        'lda': modeling.build_lda_model,
+        'lsi': modeling.build_lsi_model,
+        'tfid': modeling.build_tfid_model
     }
 
 # def build_model(dictionary, corpus, config, should_rebuild, BACKUP_FILE):
@@ -178,61 +182,6 @@ def build_model(dictionary, corpus, should_rebuild):
     except Exception as exc:
         print_exception_details('Building Model', exc)
 
-
-def build_lda_model(dictionary, corpus, should_rebuild):
-    lda = []
-
-    # DEBUG
-    # should_rebuild = True
-
-    # debug_print('datapath:LDA', datapath(cfg.LDA_BACKUP))
-
-    if not should_rebuild:
-        try:
-            print('Loading LDA Model backup...')
-            lda_file = get_file_path(cfg.LDA_BACKUP)
-            print('LDA file = {}'.format(lda_file))
-
-            # with open(LDA, "a") as lda_file:
-                # if lda_file:
-            lda = models.LdaModel.load(lda_file)
-
-        except Exception as exc:
-           print_exception_details('Building LDA Model', exc)
-
-    else:
-        print('Building LDA Model...')
-        lda = models.LdaModel(corpus, id2word=dictionary, random_state=cfg.RANDOM_STATE, num_topics=cfg.NUM_TOPICS, passes=cfg.NUM_PASSES)
-        print('Done!')
-        # Save Model Structures
-        LDA_FILE = get_file_path(cfg.LDA_BACKUP)
-        lda.save(LDA_FILE)
-
-    return lda
-
-def build_lsi_model(dictionary, corpus, should_rebuild):
-
-    if not should_rebuild:
-        try:
-            print('Loading LSI Model backup...')
-            lsi_file = get_file_path(cfg.LDA_BACKUP)
-            print('LSI file = {}'.format(lsi_file))
-
-            lsi = models.LdaModel.load(lsi_file)
-
-        except Exception as exc:
-           print_exception_details('Building LSI Model', exc)
-
-    else:
-        print('Building LSI Model...')
-        one_pass = cfg.NUM_PASSES > 1
-        lsi = models.LsiModel(corpus, id2word=dictionary, num_topics=cfg.NUM_TOPICS, onepass=one_pass)
-        print('Done!')
-        # Save Model Structures
-        LSI_FILE = get_file_path(cfg.LSI_BACKUP)
-        lsi.save(LSI_FILE)
-
-    return lsi
 
 def get_unique_matrix_sim_values(sims, content, page_ids):
     pids = []

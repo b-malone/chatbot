@@ -14,7 +14,7 @@ from werkzeug.exceptions import HTTPException, default_exceptions
 from colored_logging import ColoredLogger
 # import content
 import utils
-from topics_service import LdaModelingServer, LsiModelingServer
+from topics_service import LdaModelingServer, LsiModelingServer, TfidModelingServer
 
 
 # ### Enable logging for Gensim
@@ -45,6 +45,7 @@ api = Api(app)
 # api.add_resource(TopicModelingServer, '/topics')
 api.add_resource(LdaModelingServer, '/topics/lda')
 api.add_resource(LsiModelingServer, '/topics/lsi')
+api.add_resource(TfidModelingServer, '/topics/tfid')
 
 # Disable Caching (Development)
 app.config["CACHE_TYPE"] = "null"

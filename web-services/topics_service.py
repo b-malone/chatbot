@@ -16,8 +16,13 @@ def load_content():
     # Access DataBase content, 
     # build content (Object) for modeling and analysis
     DATABASE = utils.get_file_path(cfg.DATABASE_FILE)
-    return help_content.HelpContent(DATABASE)
-    # return content(DATABASE)
+    content = help_content.HelpContent(DATABASE)
+    
+    # for text in content.get_cleaned_pages()[0:5]:
+    #     utils.debug_print('text', text)
+
+    return content # .get_cleaned_pages()
+
 
 def build_dictionary(content):
     # Create a Dictionary
@@ -26,7 +31,7 @@ def build_dictionary(content):
     # should_rebuild = True
     # print('Should Rebuild Dictionary = {}'.format(should_rebuild))
 
-    return utils.build_dictionary(content, should_rebuild, cfg.DICT_BACKUP)
+    return utils.build_dictionary(content.get_cleaned_pages(), should_rebuild, cfg.DICT_BACKUP)
 
 def build_corpus(dictionary, content):
     # Create a Corpus
@@ -34,7 +39,7 @@ def build_corpus(dictionary, content):
     should_rebuild = not utils.try_to_open_file(cfg.CORPUS_BACKUP)
     # should_rebuild = True
     # print('Should Rebuild Corpus = {}'.format(should_rebuild))
-    return utils.build_corpus(dictionary, content, should_rebuild, cfg.CORPUS_BACKUP)
+    return utils.build_corpus(dictionary, content.get_cleaned_pages(), should_rebuild, cfg.CORPUS_BACKUP)
     # print('Corpus Size: {}'.format( len(corpus) ))
 
 def build_predictive_model(model_name, dictionary, corpus):
@@ -78,81 +83,110 @@ def query_model(model_name, content, should_rebuild, FILES, query):
 
     # Topic ID for "Max Coherence/Confidence Value"
     print('###########################')
+    print("Q_Vec")
     print( q_vec )
     print('###########################')
-    print( max(q_vec, key=lambda item: item[1]) )
-    print('###########################')
+
 
     # ISSUES
     #
     #   * ValueError: max() arg is an empty sequence
     #   ??? Does this mean topic model matching FAILED ?
     #
+    result = "NO VALID TOPICS! You want conversation??!"
+    if len(q_vec) > 0 and cfg.MODEL_NAME in ['lda', 'lsi']:
+        """
+        Query => Help Topic, respond with recommendations
+        """
 
-    
-    topic_details = model.print_topic( max(q_vec, key=lambda item: item[1])[0] )
+        print( max(q_vec, key=lambda item: item[1]) )
+        print('###########################')
 
-    # ### Get Similarity of Query Vector to Document Vectors
-    # "sims" ~ histpgram of topics? (1.0 ~ PRESENT, 0.0 ~ NOT PRESENT ?)
-    sims = utils.get_similarity(model, corpus, q_vec)
-    # Sort High-to-Low by similarity
-    sims = sorted(enumerate(sims), key=lambda item: -item[1])
-    # ###
-    # RECCOMMEND/TOPICS RESULT:
-    # ### Get Related Pages
-    pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
+        topic_details = model.print_topic( max(q_vec, key=lambda item: item[1])[0] )
+
+        # ### Get Similarity of Query Vector to Document Vectors
+        # "sims" ~ histpgram of topics? (1.0 ~ PRESENT, 0.0 ~ NOT PRESENT ?)
+        sims = utils.get_similarity(model, corpus, q_vec)
+        # Sort High-to-Low by similarity
+        sims = sorted(enumerate(sims), key=lambda item: -item[1])
+
+        # ###
+        # RECCOMMEND/TOPICS RESULT:
+        # ### Get Related Pages
+        pids = utils.get_unique_matrix_sim_values(sims, content, content.get_page_ids())
 
 
-    print('###########################')
-    print( topic_details )
-    print('###########################')
+        print('###########################')
+        print( topic_details )
+        print('###########################')
 
-    result = {}
-    for pid in pids:
-        print( 'pid={}'.format(pid) )
-        url = content.get_page_url_by_id(pid)
-        result[pid] = url[0] if isinstance(url, tuple) else url
-    
-    # print('###########################')
-    # print( result )
-    # print('###########################')
+        result = {}
+        for pid in pids:
+            print( 'pid={}'.format(pid) )
+            url = content.get_page_url_by_id(pid)
+            result[pid] = url[0] if isinstance(url, tuple) else url
+        
+        # return result
+    elif (len(q_vec) > 0 and cfg.MODEL_NAME == 'tfid'):
+
+
+        print('###########################')
+        print( model.__getitem__ )
+        print('###########################')
+
+        result = model.__getitem__
+
+        # return result
+
+    else:   
+        """
+        Query => NON-Help Topic, respond with conversation
+        """
+        # result = {}
+        result = "NO VALID TOPICS! You want conversation??!"
+
+        # return result
+
     return result
+
 
 #
 # To Do:
 #   Enable passing POST data {'model': MODEL_NAME} to change model used
 #
+def parse_client_query(json_data, model_name, stored_model_file):
+    if 'query' in json_data:
+        FILES = {'DICT': cfg.DICT_BACKUP, 'CORPUS': cfg.CORPUS_BACKUP}
+        # should_rebuild = os.stat(LDA_BACKUP).st_size == 0
+        should_rebuild = not utils.try_to_open_file(stored_model_file)
+        content = load_content()
+        
+        # Query the Model
+        return jsonify( query_model(model_name, content, should_rebuild, FILES, json_data['query']) )
+        # result = jsonify( query_model('lda', content, should_rebuild, FILES, json_data['query']) )
+    else:
+        return 'Error: INVALID JSON REQUEST'
+
 class LdaModelingServer(Resource):
     def post(self):
         cfg.MODEL_NAME = 'lda'
         json_data = request.get_json(force=True)
-        result = {}
-        if 'query' in json_data:
-            FILES = {'DICT': cfg.DICT_BACKUP, 'CORPUS': cfg.CORPUS_BACKUP}
-            # should_rebuild = os.stat(LDA_BACKUP).st_size == 0
-            should_rebuild = not utils.try_to_open_file(cfg.LDA_BACKUP)
-            content = load_content()
-            
-            # Query the Model
-            result = jsonify( query_model('lda', content, should_rebuild, FILES, json_data['query']) )
-        else:
-            result = 'Error: INVALID JSON REQUEST'
-        
-        return result
+        stored_model_file = cfg.LDA_BACKUP
+
+        return parse_client_query(json_data, 'lda', stored_model_file)
 
 class LsiModelingServer(Resource):
     def post(self):
         cfg.MODEL_NAME = 'lsi'
         json_data = request.get_json(force=True)
-        result = {}
-        if 'query' in json_data:
-            FILES = {'DICT': cfg.DICT_BACKUP, 'CORPUS': cfg.CORPUS_BACKUP}
-            should_rebuild = not utils.try_to_open_file(cfg.LSI_BACKUP)
-            content = load_content()
+        stored_model_file = cfg.LDA_BACKUP
 
-            # Query the Model
-            result = jsonify( query_model('lsi', content, should_rebuild, FILES, json_data['query']) )
-        else:
-            result = 'Error: INVALID JSON REQUEST'
-        
-        return result
+        return parse_client_query(json_data, 'lsi', stored_model_file)
+
+class TfidModelingServer(Resource):
+    def post(self):
+        cfg.MODEL_NAME = 'tfid'
+        json_data = request.get_json(force=True)
+        stored_model_file = cfg.TFID_BACKUP
+    
+        return parse_client_query(json_data, 'tfid', stored_model_file)
