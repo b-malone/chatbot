@@ -40,3 +40,11 @@
  - pycurl and openssl: 
     -- https://github.com/transloadit/python-sdk/issues/4
     -- https://cscheng.info/2018/01/26/installing-pycurl-on-macos-high-sierra.html
+
+# Resources
+## Articles and references for creating a Topic Modeling and ChatBot pipeline and improving and validating prediction accuracy
+   * https://www.programcreek.com/python/example/96045/gensim.models.TfidfModel
+   * https://towardsdatascience.com/unsupervised-nlp-topic-models-as-a-supervised-learning-input-cf8ee9e5cf28
+   * https://textblob.readthedocs.io/en/dev/
+   * https://lizadaly.com/brobot/
+   * https://monkeylearn.com/topic-analysis/
