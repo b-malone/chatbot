@@ -67,10 +67,10 @@ def query_model(model_name, content, bow, dictionary, FILES, query):
     utils.debug_print('bow', bow)
 
     # Topic ID for "Max Coherence/Confidence Value" ??????
-    cm = CoherenceModel(model=model, corpus=corpus, topn=3, coherence='u_mass')    
-    coherence = cm.get_coherence()  # get coherence value
+    # cm = CoherenceModel(model=model, corpus=corpus, topn=3, coherence='u_mass')    
+    # coherence = cm.get_coherence()  # get coherence value
   
-    utils.debug_print('coherence', cm.top_topics_as_word_lists(model=model, dictionary=dictionary, topn=3))
+    # utils.debug_print('coherence', cm.top_topics_as_word_lists(model=model, dictionary=dictionary, topn=3))
     # utils.debug_print('coherence', cm.top_topics_as_word_lists)
 
     topic_details = model.print_topic( max(q_vec, key=lambda item: item[1])[0] )
