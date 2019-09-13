@@ -33,7 +33,30 @@
       -- http://localhost:5000
 
 # Usage
-
+   - Crawling
+      * cd into craler/scrapy-splash, build a spider
+      * Run Docker container for pulling HTML content into: 
+      ```
+      $ docker run -p 8050:8050 scrapinghub/splash --max-timeout 3600
+      ```
+      * Run the scrapy-splash spider alongside the Docker container: 
+      ```
+      $ python -m scrapy runspider /path/to/spider.py
+      ```
+   - Talking to ChatBot:
+      * Spin up or deploy the web-services app.py Flask application
+      ```
+      (Development)
+      FLASK_APP=main.py FLASK_DEBUG=1 python -m flask run
+      ```
+      * Make POST requests to the Flask application with the payload {'query': MESSAGE}:
+      ```
+      curl --header "Content-Type: application/json" --request POST --data '{"query": "how do I schedule an event?"}' http://localhost:5000/topics/lda
+      ```
+## NOTE: The URLs need to be fixed so that one endpoint pulls chat requests and proxies them for conversation or modeling. Right now, different models are at different endpoints so the accuracy of different topic modeling algorithms can be compared (LDA is most stable):
+   * LDA: http://localhost:5000/topics/lda
+   * LSI: http://localhost:5000/topics/lsi
+   * TFID: http://localhost:5000/topics/tfid (refines model inputs, currently broken)
 
 
 # Issues
