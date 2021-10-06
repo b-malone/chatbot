@@ -9,7 +9,7 @@ scrapy==1.7.3
 Flask==1.1.1
 flask_restful==0.3.7
 Werkzeug==0.15
-scrapy_splash==0.7.2
+scrapy_splash==0.8.0
 selenium==3.141.0
 flask-cors==3.0.8
 simplejson==3.16.0
